@@ -1,0 +1,8 @@
+Host finalMachine.address.unicamp.br
+  HostName finalMachine.address.unicamp.br
+  User myUser_at_finalMachine
+  ProxyJump proxyMachine.address.unicamp.br
+
+Host proxyMachine.address.unicamp.br
+  HostName proxyMachine.address.unicamp.br
+  User myUser_at_proxyMachine
