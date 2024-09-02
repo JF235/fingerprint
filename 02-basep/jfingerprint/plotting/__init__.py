@@ -114,5 +114,24 @@ def plot_minutia_compare(individuals:list[str], minutiae:list[int], dataset:dict
         ax[i].set_xlim([0, width])
         ax[i].set_ylim([height, 0])
     
+def plot_fingerprint_compare(datas:list[dict], fontsize:int=10, figsize:tuple=(20, 10)):
+    n = len(datas)
+    fig, ax = plt.subplots(nrows=1, ncols=n, figsize=figsize)
+    for i in range(n):
+        di = datas[i]
+        file_path = di["path"] + di["mnt_path"] + di["individual"] + ".mnt"
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+        image_name = lines[0].strip()
+        minutiae_count, height, width = map(int, lines[1].split())
+
+        imshow_sample(ax[i], di)
+
+        ax[i].set_title(f"{di['individual']}", fontsize=fontsize)
+        ax[i].axis('off')
+        ax[i].set_xlim([0, width])
+        ax[i].set_ylim([height, 0])
+    
 if __name__ == '__main__':
     pass

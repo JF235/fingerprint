@@ -1,8 +1,9 @@
 #!/bin/bash
 
-volume1="/path/to/gallery"
-volume2="/path/to/query_basep"
-container_dir="/data"
+volume1="datasets/gallery"
+volume2="datasets/query_basep"
+volume3="fingerprint/02-basep"
+
 docker run \
     --rm \
     -p 8888:8888 \
