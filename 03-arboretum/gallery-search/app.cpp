@@ -45,7 +45,7 @@ void TApp::Run(string galleryPath, string queryPath)
    LoadTree(galleryPath);
 
    // Load the queries from .npy files and perform them
-   LoadVectorFromFile(queryPath);
+   LoadQueries(queryPath);
 
    // if (queryObjects.size() > 0)
    //    PerformQueries();
@@ -65,7 +65,7 @@ void TApp::Done()
    }
 }
 
-vector<string> getFilesInDirectory(const string &directoryPath)
+vector<string> TApp::getFilesInDirectory(const string &directoryPath)
 {
    vector<string> files;
    for (const auto &entry : fs::directory_iterator(directoryPath))
@@ -129,7 +129,7 @@ void TApp::LoadTree(string galleryPath)
    }
 }
 
-void TApp::LoadVectorFromFile(string queryPath)
+void TApp::LoadQueries(string queryPath)
 {
    vector<float> data;
    vector<unsigned long> shape;

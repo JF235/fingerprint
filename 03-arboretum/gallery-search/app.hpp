@@ -91,6 +91,9 @@ class TApp{
 
       vector <stArray *> queryObjects;
 
+
+      vector<string> getFilesInDirectory(const string &directoryPath);
+
       /**
       * Creates a disk page manager. It must be called before CreateTree().
       */
@@ -104,12 +107,12 @@ class TApp{
       /**
       * Loads the tree from file with a set of cities.
       */
-      void LoadTree(string filePath);
+      void LoadTree(string galleryPath);
 
       /**
       * Loads the vector for queries.
       */
-      void LoadVectorFromFile(string filePath);
+      void LoadQueries(string queryPath);
 
       /**
       * Performs the queries and outputs its results.
