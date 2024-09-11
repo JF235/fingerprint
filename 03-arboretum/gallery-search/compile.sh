@@ -1,0 +1,1 @@
+g++ *.cpp -std=c++17 -L../build -I../src/include -lstdc++ -lm -larboretum -o main
