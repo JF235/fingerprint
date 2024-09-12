@@ -80,11 +80,11 @@ def gallery_search(mtree:MTree, data:dict, k:int = 8) -> dict:
     
     return D
 
-def full_search(QDS:list[str], mtree:MTree, queries_dataset:dict, no_queries:int = 10) -> dict:
-    assert no_queries <= len(QDS), "Number of queries is greater than the number of queries in the dataset"
+def full_search(QDS:list[str], mtree:MTree, queries_dataset:dict, start_idx:int = 0, no_queries:int = 10) -> dict:
+    assert start_idx+no_queries <= len(QDS)+1, "Number of queries is greater than the number of queries in the dataset"
 
     result = {}
-    for j in range(no_queries):
+    for j in range(start_idx,start_idx+no_queries):
         data_q = {**queries_dataset, "individual": QDS[j]}
         D = gallery_search(mtree, data_q)
         Score = calculate_score(D)
@@ -92,6 +92,7 @@ def full_search(QDS:list[str], mtree:MTree, queries_dataset:dict, no_queries:int
         result[j] = rank[:10]
     
         # Escreve o rank 10 no arquivo, data/full_search.txt
+        print(f"Query {j}.")
         with open('data/full_search.txt', 'a') as f:
             f.write(f"Query: {j}\n")
             for idx, key in enumerate(rank[:10]):

@@ -12,4 +12,5 @@ with open('data/mtree_full.pkl', 'rb') as f:
     # 6min para criar
     mtree = pickle.load(f)
 
-full_search(QDS, mtree, queries_dataset, no_queries = 60)
+print("Total queries", len(QDS))
+full_search(QDS, mtree, queries_dataset, no_queries = 10, start_idx=0)
