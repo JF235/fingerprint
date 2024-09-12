@@ -25,6 +25,7 @@
 #include <sstream>
 #include <string.h>
 #include <fstream>
+#include <unordered_map>
 
 #include "npy.hpp"
 
@@ -40,7 +41,8 @@ using namespace std;
 
 typedef BasicArrayObject< float > stArray;
 typedef EuclideanDistance< stArray > L2;
-
+typedef pair<uint64_t, double> KthElemenResult;
+typedef unordered_map <uint64_t, vector<KthElemenResult>> ResultDict;
 
 //---------------------------------------------------------------------------
 // class TApp
@@ -84,6 +86,7 @@ class TApp{
 
    private:
 
+      string galleryPath;
 
       stPlainDiskPageManager * PageManager;
 
@@ -91,6 +94,13 @@ class TApp{
 
       vector <stArray *> queryObjects;
 
+      bool isTreeCreated;
+
+      uint64_t buildId(uint64_t sampleId, uint64_t id);
+
+      uint64_t getSampleId(uint64_t id);
+
+      uint64_t getFeatureId(uint64_t id);
 
       vector<string> getFilesInDirectory(const string &directoryPath);
 
@@ -107,22 +117,21 @@ class TApp{
       /**
       * Loads the tree from file with a set of cities.
       */
-      void LoadTree(string galleryPath);
+      void LoadTree();
 
       /**
       * Loads the vector for queries.
       */
-      void LoadQueries(string queryPath);
+      void LoadQueries(string queryFile);
 
       /**
       * Performs the queries and outputs its results.
       */
       void PerformQueries();
 
-      void PerformNearestQuery();
+      ResultDict PerformNearestQuery();
 
       void PerformRangeQuery();
-
 };//end TApp
 
 #endif //end appH

@@ -23,10 +23,41 @@
 #include <iostream>
 #include "app.hpp"
 #include <filesystem>
+#include <numeric>
 
 namespace fs = std::filesystem;
 
 #pragma package(smart_init)
+
+// std::vector output overload
+std::ostream &operator<<(std::ostream &os, const std::vector<float> &vec)
+{
+   os << "[";
+   for (size_t i = 0; i < vec.size(); ++i)
+   {
+      os << vec[i];
+      if (i != vec.size() - 1)
+         os << ", ";
+   }
+   os << "]";
+   return os;
+}
+
+// ResultDict output overload
+std::ostream &operator<<(std::ostream &os, const ResultDict &map)
+{
+   for (auto const &mapPair : map)
+   {
+      os << "Sample " << mapPair.first << " (size=" << mapPair.second.size() << "):" << endl;
+      for (auto const &resultPair : mapPair.second)
+      {
+         // Print feature Id and disntance with 2 decimal places
+         os << "(" << (resultPair.first & 0xFFFFFFFF) << ", " << fixed << setprecision(2) << resultPair.second << ") ";
+      }
+      os << "\n";
+   }
+   return os;
+}
 
 void TApp::CreateTree()
 {
@@ -35,20 +66,42 @@ void TApp::CreateTree()
 
 void TApp::CreateDiskPageManager()
 {
-   PageManager = new stPlainDiskPageManager("SlimTree.dat", 2048);
+   isTreeCreated = fs::exists("SlimTree.dat");
+   if (isTreeCreated)
+   {
+      // Open existing file
+      PageManager = new stPlainDiskPageManager("SlimTree.dat");
+   }
+   else
+   {
+      // Create new file
+      PageManager = new stPlainDiskPageManager("SlimTree.dat", 2048);
+   }
 }
 
 // Run the application, loading the tree and performing the queries.
 void TApp::Run(string galleryPath, string queryPath)
-{
-   // Load tree from .npy files
-   LoadTree(galleryPath);
+{  
+   this->galleryPath = galleryPath;
+   if (!isTreeCreated)
+   {
+      LoadTree();
+   }
+   else
+   {
+      cout << "Number of elements loaded: " << Tree->GetNumberOfObjects() << endl;
+   }
 
-   // Load the queries from .npy files and perform them
-   LoadQueries(queryPath);
-
-   // if (queryObjects.size() > 0)
-   //    PerformQueries();
+   // Perform the queries
+   vector<string> files = getFilesInDirectory(queryPath);
+   
+   for (const auto &filePath : files)
+   {
+      LoadQueries(filePath);
+      if (queryObjects.size() > 0)
+         PerformQueries();
+      break;
+   }
 }
 
 // Clean up the application.
@@ -78,35 +131,78 @@ vector<string> TApp::getFilesInDirectory(const string &directoryPath)
    return files;
 }
 
+// Build id from sampleId and id
+uint64_t TApp::buildId(uint64_t sampleId, uint64_t id)
+{
+   // Check if id doest occupy more than 32 bits
+   if (id > 0xFFFFFFFF)
+   {
+      throw "Too many features. Id must be less than 0xFFFFFFFF to concatenate with sampleId.";
+   }
+   else
+      return sampleId << 32 | id;
+}
+
+uint64_t TApp::getSampleId(uint64_t id)
+{
+   return id >> 32;
+}
+
+uint64_t TApp::getFeatureId(uint64_t id)
+{
+   return id & 0xFFFFFFFF;
+}
+
+double mean(const vector<KthElemenResult> &v)
+{
+   // compute mean of vector of KthElemenResult
+   double sum = accumulate(v.begin(), v.end(), 0.0, [](double acc, const KthElemenResult &elem) {
+      return acc + elem.second;
+   });
+   return sum / v.size();
+}
+
+double score(const vector<KthElemenResult> &v)
+{
+   // compute score associated with vector of KthElemenResult
+   // Given by the formule size(v)^(3/4)/(mean(v) + .15)
+   return pow(v.size(), 0.75) / (mean(v) + 0.15);
+}
+
 //------------------------------------------------------------------------------
-void TApp::LoadTree(string galleryPath)
+void TApp::LoadTree()
 {
    vector<float> data;
    vector<unsigned long> shape;
    uint64_t id;
+   uint64_t sampleId;
    stArray *a;
    clock_t start, end;
 
    // Get all file paths inside the galleryPath directory
    vector<string> files = getFilesInDirectory(galleryPath);
+   
+   // Select only the first N elements of files
+   files.resize(70);
 
    if (Tree != NULL)
    {
       // Go through all files in the directory
       start = clock();
+      sampleId = 0;
       for (const auto &filePath : files)
       {
          // clear before using.
          data.clear();
          shape.clear();
 
+         // Load features matrix from file
          npy::npy_data<float> d = npy::read_npy<float>(filePath);
-
          data = d.data;
          shape = d.shape;
 
-         cout << shape[0] << " from " << filePath << endl;
-
+         cout << shape[0] << " from " << filePath.substr(filePath.find_last_of("/\\") + 1) << endl;
+         
          // Go through the lines of matrix
          for (uint64_t i = 0; i < shape[0]; i++)
          {
@@ -114,10 +210,15 @@ void TApp::LoadTree(string galleryPath)
             vector<float> feature(data.begin() + i * shape[1], data.begin() + (i + 1) * shape[1]);
 
             // Insert feature vector in the tree
-            a = new stArray(i, feature);
+            id = buildId(sampleId, i);
+
+            // cout << id << ":: " <<  getSampleId(id) << " - " << getFeatureId(id) << endl;
+            a = new stArray(id, feature);
             Tree->Add(a);
             delete a;
          }
+
+         sampleId++;
       }
       end = clock();
       cout << "\nTotal Time: " << ((double)end - (double)start) / (CLOCKS_PER_SEC / 1000) << "ms. ";
@@ -129,7 +230,7 @@ void TApp::LoadTree(string galleryPath)
    }
 }
 
-void TApp::LoadQueries(string queryPath)
+void TApp::LoadQueries(string queryFile)
 {
    vector<float> data;
    vector<unsigned long> shape;
@@ -140,49 +241,65 @@ void TApp::LoadQueries(string queryPath)
    queryObjects.clear();
 
    // Get all file paths inside the queryPath directory
-   vector<string> files = getFilesInDirectory(queryPath);
 
-   start = clock();
-   for (const auto &filePath : files)
+   npy::npy_data<float> d = npy::read_npy<float>(queryFile);
+
+   data = d.data;
+   shape = d.shape;
+
+   // Go through the lines of matrix
+   for (uint64_t i = 0; i < shape[0]; i++)
    {
-      data.clear();
-      shape.clear();
+      // Get ith line from data matrix
+      vector<float> feature(data.begin() + i * shape[1], data.begin() + (i + 1) * shape[1]);
 
-      npy::npy_data<float> d = npy::read_npy<float>(filePath);
-
-      data = d.data;
-      shape = d.shape;
-
-      cout << shape[0] << " from " << filePath << endl;
-
-      // Go through the lines of matrix
-      for (uint64_t i = 0; i < shape[0]; i++)
-      {
-         // Get ith line from data matrix
-         vector<float> feature(data.begin() + i * shape[1], data.begin() + (i + 1) * shape[1]);
-
-         // Insert feature vector in the queryObjects vector
-         this->queryObjects.insert(queryObjects.end(), new stArray(i, feature));
-      }
+      // Insert feature vector in the queryObjects vector
+      this->queryObjects.insert(queryObjects.end(), new stArray(i, feature));
    }
-   end = clock();
-   // cout << "\nTotal Time: " << ((double)end - (double)start) / (CLOCKS_PER_SEC / 1000) << "(mili second)";
 
-   cout << "Added " << queryObjects.size() << " objects to query\n\n";
+   cout << "Query: " << queryObjects.size() << " from " << queryFile.substr(queryFile.find_last_of("/\\") + 1) << "\n\n";
 }
 
 //------------------------------------------------------------------------------
 void TApp::PerformQueries()
 {
+   ResultDict map;
    if (Tree)
    {
       // cout << "\nStarting Statistics for Range Query with SlimTree.... ";
       // PerformRangeQuery();
       // cout << " Ok\n";
 
-      cout << "\nStarting Statistics for Nearest Query with SlimTree.... ";
-      PerformNearestQuery();
-      cout << " Ok\n";
+      cout << "\nStarting Statistics for Nearest Query with SlimTree...\n";
+      map = PerformNearestQuery();
+      
+      cout << "\n\n";
+      
+      // Sort map by score and outputs list of 8 highest scores
+      vector<pair<uint64_t, double>> sortedScores;
+      for (auto const &mapPair : map)
+      {
+         sortedScores.push_back(make_pair(mapPair.first, score(mapPair.second)));
+      }
+      sort(sortedScores.begin(), sortedScores.end(), [](const pair<uint64_t, double> &a, const pair<uint64_t, double> &b) {
+         return a.second > b.second;
+      });
+
+      // For the 3 first cores, also print the name of the file associated
+      cout << "Top 8 scores:\n";
+      vector<string> files = getFilesInDirectory(galleryPath);
+      string fileName;
+      for (int i = 0; i < 8; i++)
+      {
+         cout << sortedScores[i].first << ": " << fixed << setprecision(2) << sortedScores[i].second;
+         if (i < 3)
+         {
+            fileName = files[sortedScores[i].first];
+            cout << " (" << fileName.substr(fileName.find_last_of("/\\") + 1) << ")";
+         }
+         cout << endl;
+      }
+      
    }
 }
 
@@ -222,52 +339,52 @@ void TApp::PerformRangeQuery()
 } // end TApp::PerformRangeQuery
 
 //------------------------------------------------------------------------------
-void TApp::PerformNearestQuery()
+ResultDict TApp::PerformNearestQuery()
 {
 
    Result *result;
    clock_t start, end;
-   unsigned int size;
-   unsigned int i;
-   int id;
-   unsigned int K = 4;
-   vector<float> vec;
-   stArray *a;
+   uint64_t id;
+   double dist;
+   unsigned int K = 8;
+   // SampleId: vector<(FeatureId, Distance)>
+   ResultDict map;
+
+   unsigned long size = queryObjects.size();
 
    if (Tree)
    {
-      size = queryObjects.size();
       PageManager->ResetStatistics();
       Tree->GetMetricEvaluator()->ResetStatistics();
       start = clock();
-      for (i = 0; i < queryObjects.size(); i++)
+      for (unsigned int i = 0; i < size; i++)
       {
 
          result = Tree->NearestQuery(queryObjects[i], K);
 
-         cout << endl;
-
-         for (int k = 0; k < K; k++)
+         for (unsigned int j = 0; j < result->GetNumOfEntries(); j++)
          {
-            a = result->GetPair(k)->GetObject();
-            vec = a->getData();
-            id = a->getOID();
-            cout << id << ": ";
-            // Print data
-            for (int j = 0; j < vec.size(); j++)
-            {
-               cout << vec[j] << " ";
-            }
-            cout << endl;
+            id = result->GetPair(j)->GetObject()->GetOID();
+            dist = result->GetPair(j)->GetKey();
+            map[getSampleId(id)].push_back(KthElemenResult (id, dist));
          }
 
          delete result;
       } // end for
+      
+      // Outputs generated map
+      //cout << map;
+
       end = clock();
+
+      // Stats
       cout << "\nTotal Time: " << ((double)end - (double)start) / (CLOCKS_PER_SEC / 1000) << "(mili second)";
-      // is divided for queryObjects to get the everage
       cout << "\nAvg Disk Accesses: " << (double)PageManager->GetReadCount() / (double)size;
-      // is divided for queryObjects to get the everage
       cout << "\nAvg Distance Calculations: " << (double)Tree->GetMetricEvaluator()->GetDistanceCount() / (double)size;
-   } // end if
-} // end TApp::PerformNearestQuery
+      cout << "\n";
+   }
+
+   return map;
+}
+
+
