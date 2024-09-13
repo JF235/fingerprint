@@ -344,7 +344,6 @@ ResultDict TApp::PerformNearestQuery()
    clock_t start, end;
    uint64_t id;
    double dist;
-   unsigned int K = 8;
    ResultDict map; // SampleId: vector<(FeatureId, Distance)>
 
    unsigned long size = queryObjects.size();

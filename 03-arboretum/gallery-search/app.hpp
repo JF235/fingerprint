@@ -57,6 +57,7 @@ class TApp{
       TApp(){
          PageManager = NULL;
          Tree = NULL;
+         K = 7;
       }
 
       /**
@@ -84,6 +85,10 @@ class TApp{
       */
       void Done();
 
+      void setK(int K){
+         this->K = K;
+      }
+
    private:
 
       string galleryPath;
@@ -95,6 +100,8 @@ class TApp{
       vector <stArray *> queryObjects;
 
       bool isTreeCreated;
+
+      unsigned int K;
 
       uint64_t buildId(uint64_t sampleId, uint64_t id);
 
