@@ -89,7 +89,7 @@ void TApp::Run(string galleryPath, string queryPath)
    }
    else
    {
-      cout << "Number of elements loaded: " << Tree->GetNumberOfObjects() << endl;
+      cout << "Elements added to Tree: " << Tree->GetNumberOfObjects() << "\n\n";
    }
 
    // Perform the queries
@@ -100,7 +100,6 @@ void TApp::Run(string galleryPath, string queryPath)
       LoadQueries(filePath);
       if (queryObjects.size() > 0)
          PerformQueries();
-      break;
    }
 }
 
@@ -165,7 +164,6 @@ double mean(const vector<KthElemenResult> &v)
 double score(const vector<KthElemenResult> &v)
 {
    // compute score associated with vector of KthElemenResult
-   // Given by the formule size(v)^(3/4)/(mean(v) + .15)
    return pow(v.size(), 0.75) / (mean(v) + 0.15);
 }
 
@@ -182,8 +180,7 @@ void TApp::LoadTree()
    // Get all file paths inside the galleryPath directory
    vector<string> files = getFilesInDirectory(galleryPath);
    
-   // Select only the first N elements of files
-   files.resize(70);
+   cout << "Loading " << files.size() << " files from " << galleryPath << endl;
 
    if (Tree != NULL)
    {
@@ -201,7 +198,6 @@ void TApp::LoadTree()
          data = d.data;
          shape = d.shape;
 
-         cout << shape[0] << " from " << filePath.substr(filePath.find_last_of("/\\") + 1) << endl;
          
          // Go through the lines of matrix
          for (uint64_t i = 0; i < shape[0]; i++)
@@ -219,9 +215,15 @@ void TApp::LoadTree()
          }
 
          sampleId++;
+
+
+        if (sampleId % (files.size() / 100) == 0) {
+            int progress = (sampleId * 100) / files.size();
+            cout << "\r" << progress << "% completed" << flush;
+        }
       }
       end = clock();
-      cout << "\nTotal Time: " << ((double)end - (double)start) / (CLOCKS_PER_SEC / 1000) << "ms. ";
+      cout << "\nTotal Time: " << ((double)end - (double)start) / CLOCKS_PER_SEC << "s. ";
       cout << "Added " << Tree->GetNumberOfObjects() << " objects to tree\n\n";
    }
    else
@@ -257,7 +259,7 @@ void TApp::LoadQueries(string queryFile)
       this->queryObjects.insert(queryObjects.end(), new stArray(i, feature));
    }
 
-   cout << "Query: " << queryObjects.size() << " from " << queryFile.substr(queryFile.find_last_of("/\\") + 1) << "\n\n";
+   cout << "\nQuery: " << queryObjects.size() << " from " << queryFile.substr(queryFile.find_last_of("/\\") + 1);
 }
 
 //------------------------------------------------------------------------------
@@ -270,11 +272,8 @@ void TApp::PerformQueries()
       // PerformRangeQuery();
       // cout << " Ok\n";
 
-      cout << "\nStarting Statistics for Nearest Query with SlimTree...\n";
       map = PerformNearestQuery();
-      
-      cout << "\n\n";
-      
+            
       // Sort map by score and outputs list of 8 highest scores
       vector<pair<uint64_t, double>> sortedScores;
       for (auto const &mapPair : map)
@@ -286,12 +285,11 @@ void TApp::PerformQueries()
       });
 
       // For the 3 first cores, also print the name of the file associated
-      cout << "Top 8 scores:\n";
       vector<string> files = getFilesInDirectory(galleryPath);
       string fileName;
-      for (int i = 0; i < 8; i++)
+      for (int i = 0; i < min(8, (int)sortedScores.size()); i++)
       {
-         cout << sortedScores[i].first << ": " << fixed << setprecision(2) << sortedScores[i].second;
+         cout << sortedScores[i].first << ": " << fixed << setprecision(4) << sortedScores[i].second;
          if (i < 3)
          {
             fileName = files[sortedScores[i].first];
@@ -347,8 +345,7 @@ ResultDict TApp::PerformNearestQuery()
    uint64_t id;
    double dist;
    unsigned int K = 8;
-   // SampleId: vector<(FeatureId, Distance)>
-   ResultDict map;
+   ResultDict map; // SampleId: vector<(FeatureId, Distance)>
 
    unsigned long size = queryObjects.size();
 
@@ -364,7 +361,7 @@ ResultDict TApp::PerformNearestQuery()
 
          for (unsigned int j = 0; j < result->GetNumOfEntries(); j++)
          {
-            id = result->GetPair(j)->GetObject()->GetOID();
+            id = result->GetPair(j)->GetObject()->getOID();
             dist = result->GetPair(j)->GetKey();
             map[getSampleId(id)].push_back(KthElemenResult (id, dist));
          }
@@ -378,10 +375,11 @@ ResultDict TApp::PerformNearestQuery()
       end = clock();
 
       // Stats
-      cout << "\nTotal Time: " << ((double)end - (double)start) / (CLOCKS_PER_SEC / 1000) << "(mili second)";
-      cout << "\nAvg Disk Accesses: " << (double)PageManager->GetReadCount() / (double)size;
-      cout << "\nAvg Distance Calculations: " << (double)Tree->GetMetricEvaluator()->GetDistanceCount() / (double)size;
-      cout << "\n";
+      cout << ", Total Time: " << ((double)end - (double)start) / (CLOCKS_PER_SEC / 1000) << "(ms)\n";
+      // cout << "\nTotal Time: " << ((double)end - (double)start) / (CLOCKS_PER_SEC / 1000) << "(ms)";
+      // cout << "\nAvg Disk Accesses: " << (double)PageManager->GetReadCount() / (double)size;
+      // cout << "\nAvg Distance Calculations: " << (double)Tree->GetMetricEvaluator()->GetDistanceCount() / (double)size;
+      // cout << "\n";
    }
 
    return map;
