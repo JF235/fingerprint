@@ -5,3 +5,4 @@ real_docker.sh
 *.o
 main
 settings.json
+.vscode
