@@ -4,3 +4,4 @@ real_docker.sh
 *.dat
 *.o
 main
+settings.json
