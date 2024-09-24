@@ -32,6 +32,7 @@
 // Metric Tree includes
 #include <arboretum/stPlainDiskPageManager.h>
 #include <arboretum/stSlimTree.h>
+#include <arboretum/stDummyTree.h>
 #include <hermes/EuclideanDistance.h>
 
 // Object type
@@ -52,12 +53,14 @@ class TApp{
 
       typedef stResult < stArray > Result;
       typedef stMetricTree < stArray, L2 > MetricTree;
-      typedef stSlimTree < stArray, L2 > SlimTree;
+      typedef stDummyTree < stArray, L2 > DummyTree;
 
       TApp(){
          PageManager = NULL;
          Tree = NULL;
          K = 7;
+         maxQueries = 0;
+         maxFeatures = 0;
       }
 
       /**
@@ -89,6 +92,14 @@ class TApp{
          this->K = K;
       }
 
+      void setMaxQueries(int maxQueries){
+         this->maxQueries = maxQueries;
+      }
+      
+      void setMaxFeatures(int maxFeatures){
+         this->maxFeatures = maxFeatures;
+      }
+
    private:
 
       string galleryPath;
@@ -102,6 +113,9 @@ class TApp{
       bool isTreeCreated;
 
       unsigned int K;
+      unsigned int maxQueries;
+      unsigned int maxFeatures;
+
 
       uint64_t buildId(uint64_t sampleId, uint64_t id);
 
@@ -138,7 +152,9 @@ class TApp{
 
       ResultDict PerformNearestQuery();
 
+      void printRank(ResultDict map);
+
       void PerformRangeQuery();
 };//end TApp
 
-#endif //end appH
+#endif

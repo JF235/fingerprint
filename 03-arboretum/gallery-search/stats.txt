@@ -1,1 +1,0 @@
-Total Time: 998552ms. Added 677439 objects to tree

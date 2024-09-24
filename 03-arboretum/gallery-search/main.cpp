@@ -31,14 +31,37 @@ int main(int argc, char* argv[]){
       if (strcmp(argv[i], "-K") == 0) {
          if (i + 1 < argc) {
             app.setK(atoi(argv[i + 1]));
-            i+=2;
          } else {
             cout << "Missing argument for -K" << endl;
             return 1;
          }
-      }      
+      }    
+
+      // -maxQueries for setting the maximum number of queries
+      if (strcmp(argv[i], "-maxQueries") == 0) {
+         if (i + 1 < argc) {
+            app.setMaxQueries(atoi(argv[i + 1]));
+         } else {
+            cout << "Missing argument for -maxQueries" << endl;
+            return 1;
+         }
+      }
+
+      // -maxFeatures for setting the maximum number of features for each query
+      if (strcmp(argv[i], "-maxFeatures") == 0) {
+         if (i + 1 < argc) {
+            app.setMaxFeatures(atoi(argv[i + 1]));
+         } else {
+            cout << "Missing argument for -maxFeatures" << endl;
+            return 1;
+         }
+      }
+
+      i+=2;
    }
    
+   
+
    app.Init();
 
    app.Run(galleryPath, queryPath);

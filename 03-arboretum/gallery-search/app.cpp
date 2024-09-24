@@ -94,6 +94,16 @@ void TApp::Run(string galleryPath, string queryPath)
 
    // Perform the queries
    vector<string> files = getFilesInDirectory(queryPath);
+
+   // Select only the first maxQueries files
+   if (maxQueries > 0)
+   {
+      files.resize(maxQueries);
+   }
+   else
+   {
+      maxQueries = files.size();
+   }
    
    for (const auto &filePath : files)
    {
@@ -248,9 +258,19 @@ void TApp::LoadQueries(string queryFile)
 
    data = d.data;
    shape = d.shape;
+   
+   // Add only the first maxFeatures in queryObjects
+   if (maxFeatures > 0)
+   {
+      shape[0] = min(maxFeatures, (unsigned int)shape[0]);
+   }
+   else
+   {
+      maxFeatures = shape[0];
+   }
 
    // Go through the lines of matrix
-   for (uint64_t i = 0; i < shape[0]; i++)
+   for (uint64_t i = 0; i < maxFeatures; i++)
    {
       // Get ith line from data matrix
       vector<float> feature(data.begin() + i * shape[1], data.begin() + (i + 1) * shape[1]);
@@ -263,17 +283,11 @@ void TApp::LoadQueries(string queryFile)
 }
 
 //------------------------------------------------------------------------------
-void TApp::PerformQueries()
-{
-   ResultDict map;
-   if (Tree)
-   {
-      // cout << "\nStarting Statistics for Range Query with SlimTree.... ";
-      // PerformRangeQuery();
-      // cout << " Ok\n";
+void TApp::printRank(ResultDict map)
+{     
+      // map: SampleId: vector<(FeatureId, Distance)>
+      // A dictionary with the sampleId as key and a vector of pairs (FeatureId, Distance) as value
 
-      map = PerformNearestQuery();
-            
       // Sort map by score and outputs list of 8 highest scores
       vector<pair<uint64_t, double>> sortedScores;
       for (auto const &mapPair : map)
@@ -284,20 +298,31 @@ void TApp::PerformQueries()
          return a.second > b.second;
       });
 
-      // For the 3 first cores, also print the name of the file associated
+      // Print the M highest scores
+      int M = 8;
+      
       vector<string> files = getFilesInDirectory(galleryPath);
       string fileName;
-      for (int i = 0; i < min(8, (int)sortedScores.size()); i++)
+      for (int i = 0; i < min(M, (int)sortedScores.size()); i++)
       {
          cout << sortedScores[i].first << ": " << fixed << setprecision(4) << sortedScores[i].second;
          if (i < 3)
-         {
+         { 
+            // For the 3 first scores, also print the name of the file
             fileName = files[sortedScores[i].first];
             cout << " (" << fileName.substr(fileName.find_last_of("/\\") + 1) << ")";
          }
          cout << endl;
       }
-      
+}
+
+void TApp::PerformQueries()
+{
+   ResultDict map;
+   if (Tree)
+   {
+      map = PerformNearestQuery();        
+      printRank(map);
    }
 }
 
@@ -344,7 +369,7 @@ ResultDict TApp::PerformNearestQuery()
    clock_t start, end;
    uint64_t id;
    double dist;
-   ResultDict map; // SampleId: vector<(FeatureId, Distance)>
+   ResultDict map; // map: SampleId -> vector<pair<FeatureId, Distance>>
 
    unsigned long size = queryObjects.size();
 
@@ -365,13 +390,15 @@ ResultDict TApp::PerformNearestQuery()
             map[getSampleId(id)].push_back(KthElemenResult (id, dist));
          }
 
+         //cout << endl << result->GetNumOfEntries() << endl;
+
          delete result;
-      } // end for
-      
-      // Outputs generated map
-      //cout << map;
+      }
 
       end = clock();
+
+      // Outputs generated map
+      cout << endl << map << endl;
 
       // Stats
       cout << ", Total Time: " << ((double)end - (double)start) / (CLOCKS_PER_SEC / 1000) << "(ms)\n";
