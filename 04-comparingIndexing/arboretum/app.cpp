@@ -21,7 +21,7 @@
 //---------------------------------------------------------------------------
 #include <iostream>
 #pragma hdrstop
-#include "app.hpp"
+#include "app.h"
 
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
@@ -31,23 +31,23 @@
 void TApp::CreateTree()
 {
    // create for Slim-Tree
-   Tree = new mySlimTree(PageManager);
+   Tree = new myDummyTree(PageManager);
 } // end TApp::CreateTree
 
 //------------------------------------------------------------------------------
 void TApp::CreateDiskPageManager()
 {
 
-   isTreeCreated = exists("SlimTree.dat");
+   isTreeCreated = exists("DummyTree.dat");
    if (isTreeCreated)
    {
       // Open existing file
-      PageManager = new stPlainDiskPageManager("SlimTree.dat");
+      PageManager = new stPlainDiskPageManager("DummyTree.dat");
    }
    else
    {
       // Create new file
-      PageManager = new stPlainDiskPageManager("SlimTree.dat", 1024);
+      PageManager = new stPlainDiskPageManager("DummyTree.dat", 2048*4);
    }
 
 } // end TApp::CreateDiskPageManager
@@ -56,14 +56,12 @@ void TApp::CreateDiskPageManager()
 void TApp::Run()
 {
    // Lets load the tree with a lot values from the file.
-   cout << "\n\nAdding objects in the SlimTree\n";
    LoadTree(DATAFILE);
 
    cout << "Height of Tree: " << Tree->GetHeight() << "\n";
    cout << "Node count: " << Tree->GetNodeCount() << "\n";
-   cout << "Min/Max node occupation: " << Tree->GetMinOccupation() << "/" << Tree->GetMaxOccupation() << "\n";
+   cout << "Min/Max node occupation: " << Tree->GetMinOccupation() << "/" << Tree->GetMaxOccupation() << "\n\n";
 
-   cout << "\n\nLoading the query file";
    LoadVectorFromFile(QUERYFILE);
 
    if (queryObjects.size() > 0)
@@ -72,7 +70,7 @@ void TApp::Run()
       PerformQueries();
    } // end if
    // Hold the screen.
-   cout << "\n\nFinished the whole test!";
+   cout << "\n\nEND.\n";
 } // end TApp::Run
 
 //------------------------------------------------------------------------------
@@ -115,6 +113,8 @@ void TApp::LoadTree(char *fileName)
       npy::npy_data<float> d = npy::read_npy<float>(fileName);
       data = d.data;
       shape = d.shape;
+
+      cout << "Loading data with shape: " << shape[0] << "x" << shape[1] << "\n";
       uint32_t noElemen = 0;
       // Go through the lines of matrix
       for (uint32_t i = 0; i < shape[0]; i++)
@@ -134,7 +134,7 @@ void TApp::LoadTree(char *fileName)
          delete array;
       }
       end = clock();
-      cout << "\nTotal Time: " << ((double)end - (double)start) / CLOCKS_PER_SEC << "s. ";
+      cout << "Total Time: " << ((double)end - (double)start) / CLOCKS_PER_SEC << "s.\n";
       cout << "Added " << Tree->GetNumberOfObjects() << " objects to tree (" << noElemen << ")\n\n";
    }
    else
@@ -157,7 +157,7 @@ void TApp::LoadVectorFromFile(char *fileName)
    data = d.data;
    shape = d.shape;
 
-   cout << "\nLoading query objects ";
+   cout << "Loading query objects with shape: " << shape[0] << "x" << shape[1] << "\n";
    // Go through the lines of matrix
    for (uint32_t i = 0; i < shape[0]; i++)
    {
@@ -167,7 +167,7 @@ void TApp::LoadVectorFromFile(char *fileName)
       this->queryObjects.insert(queryObjects.end(), new myArray(i, feature));
    }
 
-   cout << " Added " << queryObjects.size() << " query objects ";
+   cout << "Added " << queryObjects.size() << " query objects\n\n";
 } // end TApp::LoadVectorFromFile
 
 //------------------------------------------------------------------------------
@@ -175,13 +175,11 @@ void TApp::PerformQueries()
 {
    if (Tree)
    {
-      // cout << "\nStarting Statistics for Range Query with SlimTree.... ";
+      // cout << "\nStarting Statistics for Range Query with DummyTree.... ";
       // PerformRangeQuery();
       // cout << " Ok\n";
 
-      cout << "\nStarting Statistics for Nearest Query with SlimTree.... ";
       PerformNearestQuery();
-      cout << " Ok\n";
    } // end if
 } // end TApp::PerformQuery
 
@@ -229,36 +227,46 @@ void TApp::PerformNearestQuery()
    clock_t start2, end2;
    unsigned int size;
    unsigned int i;
+   unsigned int k;
 
    if (Tree)
    {
       size = queryObjects.size();
+      cout << "Performing " << size << " queries with DummyTree\n";
       PageManager->ResetStatistics();
       Tree->GetMetricEvaluator()->ResetStatistics();
       start = clock();
+      for (k = 0; k < 1; k++){
       for (i = 0; i < size; i++)
       {
          clock_t start2 = clock();
-         result = Tree->NearestQuery(queryObjects[i], 64);
+         result = Tree->NearestQuery(queryObjects[i], 32);
          clock_t end2 = clock();
-         cout << "\nPartial Time: " << ((double)end2 - (double)start2) / (CLOCKS_PER_SEC / 1000) << "(mili second)";
-         if (i == 0)
+         cout << "Single Query Time: " << ((double)end2 - (double)start2) / (CLOCKS_PER_SEC / 1000) << "(mili second)\n";
+         if (i == 0 && k == 0)
          {
-            cout << "Result from 0th query: " << result->GetNumOfEntries() << "\n";
+            cout << "k = " << result->GetNumOfEntries() << "\n";
             for (int j = 0; j < result->GetNumOfEntries(); j++)
             {
-               cout << "Distance from " << result->GetPair(j)->GetObject()->GetOID() << ": " << result->GetPair(j)->GetDistance() << "; ";
-               if (j % 8 == 0)
+               // Output distance with 4 decimal places
+               cout << "(" << result->GetPair(j)->GetObject()->GetOID() << ", " << std::fixed << std::setprecision(4) << result->GetPair(j)->GetDistance() << ") ";
+               if ((j + 1) % 8 == 0)
                   cout << "\n";
+               // Reset fixed
+               cout << std::resetiosflags(std::ios::fixed);
             }
          }
          delete result;
       } // end for
+      }
+      cout << "\n\n";
       end = clock();
-      cout << "\nTotal Time: " << ((double)end - (double)start) / (CLOCKS_PER_SEC / 1000) << "(mili second)";
+      cout << "Total Time: " << ((double)end - (double)start) / (CLOCKS_PER_SEC / 1000) << "(mili second)\n";
       // is divided for queryObjects to get the everage
-      cout << "\nAvg Disk Accesses: " << (double)PageManager->GetReadCount() / (double)size;
+      cout << "Avg Disk Accesses: " << (double)PageManager->GetReadCount() / (double)size << "\n";
       // is divided for queryObjects to get the everage
-      cout << "\nAvg Distance Calculations: " << (double)Tree->GetMetricEvaluator()->GetDistanceCount() / (double)size;
+      cout << std::fixed << std::setprecision(0);
+      cout << "Avg Distance Calculations: " << (double)Tree->GetMetricEvaluator()->GetDistanceCount() / (double)size << "\n";
+      cout << std::resetiosflags(std::ios::fixed);
    } // end if
 } // end TApp::PerformNearestQuery

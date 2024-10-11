@@ -1,0 +1,413 @@
+Loading data with shape: 100000x4
+99% completedTotal Time: 0.470138s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 0
+Node count: 393
+Min/Max node occupation: -1/255
+
+Loading query objects with shape: 80x4
+Added 80 query objects
+
+Performing 80 queries with DummyTree
+Single Query Time: 24.424(mili second)
+k = 32
+(3869, 0.0231) (91867, 0.0239) (39426, 0.0318) (6727, 0.0499) (78287, 0.0543) (95378, 0.0615) (39042, 0.0630) (54259, 0.0632) 
+(15059, 0.0648) (14535, 0.0700) (49160, 0.0807) (27035, 0.0813) (48702, 0.0829) (47964, 0.0862) (68125, 0.0920) (63345, 0.0934) 
+(24460, 0.0938) (78374, 0.0948) (22482, 0.0955) (19473, 0.0984) (72797, 0.1016) (66433, 0.1029) (90539, 0.1034) (65603, 0.1066) 
+(43433, 0.1069) (79517, 0.1110) (10971, 0.1117) (15011, 0.1123) (23681, 0.1167) (2424, 0.1180) (97654, 0.1185) (46619, 0.1231) 
+Single Query Time: 24.57(mili second)
+Single Query Time: 24.43(mili second)
+Single Query Time: 24.41(mili second)
+Single Query Time: 24.4(mili second)
+Single Query Time: 24.54(mili second)
+Single Query Time: 24.42(mili second)
+Single Query Time: 24.4(mili second)
+Single Query Time: 24.38(mili second)
+Single Query Time: 24.62(mili second)
+
+
+Total Time: 2112(mili second)
+Avg Disk Accesses: 393
+Avg Distance Calculations: 100000
+
+
+END.
+
+-------------------------------------------
+
+Loading data with shape: 100000x8
+99% completedTotal Time: 0.546808s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 0
+Node count: 589
+Min/Max node occupation: -1/170
+
+Loading query objects with shape: 80x8
+Added 80 query objects
+
+Performing 80 queries with DummyTree
+Single Query Time: 41.538(mili second)
+k = 32
+(89969, 0.3365) (30098, 0.3373) (45866, 0.3429) (65217, 0.3436) (70893, 0.3448) (36026, 0.3510) (25266, 0.3534) (68772, 0.3550) 
+(7251, 0.3570) (5907, 0.3575) (25068, 0.3616) (97887, 0.3725) (54436, 0.3742) (24251, 0.3758) (74501, 0.3763) (13823, 0.3781) 
+(54799, 0.3787) (31122, 0.3798) (57108, 0.3842) (23880, 0.3876) (20590, 0.3953) (93264, 0.4019) (34653, 0.4025) (64737, 0.4029) 
+(7240, 0.4036) (68331, 0.4054) (3391, 0.4084) (76789, 0.4089) (41779, 0.4089) (86230, 0.4127) (40790, 0.4130) (33953, 0.4148) 
+Single Query Time: 41.52(mili second)
+Single Query Time: 41.54(mili second)
+Single Query Time: 41.6(mili second)
+Single Query Time: 41.61(mili second)
+Single Query Time: 41.6(mili second)
+Single Query Time: 41.48(mili second)
+Single Query Time: 41.6(mili second)
+
+
+Total Time: 3327(mili second)
+Avg Disk Accesses: 589
+Avg Distance Calculations: 100000
+
+
+END.
+-------------------------------------------
+
+Loading data with shape: 100000x16
+99% completedTotal Time: 0.576017s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 0
+Node count: 981
+Min/Max node occupation: -1/102
+
+Loading query objects with shape: 80x16
+Added 80 query objects
+
+Performing 80 queries with DummyTree
+Single Query Time: 69.589(mili second)
+k = 32
+(23848, 0.4956) (85713, 0.5394) (16427, 0.5543) (54253, 0.5888) (58366, 0.6071) (98199, 0.6102) (12756, 0.6112) (16970, 0.6211) 
+(25802, 0.6230) (80311, 0.6374) (68010, 0.6432) (22629, 0.6450) (7551, 0.6481) (98086, 0.6508) (12535, 0.6547) (96801, 0.6568) 
+(49712, 0.6600) (86993, 0.6607) (72729, 0.6678) (56134, 0.6680) (54125, 0.6764) (18569, 0.6807) (52377, 0.6808) (18213, 0.6822) 
+(68188, 0.6842) (22065, 0.6851) (64649, 0.6856) (77824, 0.6870) (38077, 0.6918) (55926, 0.6939) (19249, 0.6952) (93833, 0.6953) 
+Single Query Time: 71.23(mili second)
+Single Query Time: 122.9(mili second)
+Single Query Time: 72(mili second)
+Single Query Time: 69.56(mili second)
+Single Query Time: 69.83(mili second)
+Single Query Time: 69.55(mili second)
+Single Query Time: 69.32(mili second)
+
+
+Total Time: 5900(mili second)
+Avg Disk Accesses: 981
+Avg Distance Calculations: 100000
+-------------------------------------------
+Loading data with shape: 100000x32
+99% completedTotal Time: 0.621579s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 0
+Node count: 1786
+Min/Max node occupation: -1/56
+
+Loading query objects with shape: 80x32
+Added 80 query objects
+
+Performing 80 queries with DummyTree
+Single Query Time: 122.662(mili second)
+k = 32
+(39012, 0.8541) (72022, 0.8588) (97966, 0.8621) (77034, 0.8641) (5199, 0.8702) (43414, 0.8740) (6378, 0.8787) (71688, 0.8787) 
+(82336, 0.8853) (60077, 0.8862) (62201, 0.8915) (70115, 0.8932) (91614, 0.8941) (26890, 0.8952) (49897, 0.9018) (49274, 0.9019) 
+(83391, 0.9044) (2429, 0.9168) (87362, 0.9169) (14629, 0.9173) (29331, 0.9195) (64151, 0.9217) (86495, 0.9233) (31970, 0.9243) 
+(55268, 0.9265) (8526, 0.9285) (70457, 0.9292) (93785, 0.9310) (87951, 0.9336) (21445, 0.9365) (87922, 0.9370) (77227, 0.9387) 
+Single Query Time: 124(mili second)
+Single Query Time: 123.4(mili second)
+Single Query Time: 124.1(mili second)
+Single Query Time: 126(mili second)
+Single Query Time: 123.5(mili second)
+Single Query Time: 123.9(mili second)
+Single Query Time: 123.5(mili second)
+
+
+Total Time: 1.027e+04(mili second)
+Avg Disk Accesses: 1786
+Avg Distance Calculations: 100000
+
+
+END.
+-------------------------------------------
+Loading data with shape: 100000x64
+99% completedTotal Time: 0.988519s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 0
+Node count: 3334
+Min/Max node occupation: -1/30
+
+Loading query objects with shape: 80x64
+Added 80 query objects
+
+Performing 80 queries with DummyTree
+Single Query Time: 232.373(mili second)
+k = 32
+(4263, 1.0095) (35844, 1.0169) (2830, 1.0177) (83982, 1.0307) (29537, 1.0328) (60182, 1.0418) (65407, 1.0418) (85912, 1.0440) 
+(29703, 1.0442) (28609, 1.0488) (13122, 1.0514) (24612, 1.0534) (52852, 1.0592) (97782, 1.0632) (6143, 1.0637) (51888, 1.0651) 
+(10302, 1.0657) (48079, 1.0715) (21707, 1.0729) (21644, 1.0745) (57706, 1.0747) (83360, 1.0758) (80957, 1.0789) (56782, 1.0791) 
+(65739, 1.0812) (84567, 1.0813) (63630, 1.0819) (73830, 1.0824) (69206, 1.0830) (50540, 1.0845) (61799, 1.0852) (16290, 1.0858) 
+Single Query Time: 230.6(mili second)
+Single Query Time: 232.9(mili second)
+Single Query Time: 216.8(mili second)
+Single Query Time: 213.9(mili second)
+Single Query Time: 216.9(mili second)
+Single Query Time: 220.7(mili second)
+Single Query Time: 214.2(mili second)
+
+
+Total Time: 1.78e+04(mili second)
+Avg Disk Accesses: 3334
+Avg Distance Calculations: 100000
+
+
+END.
+-------------------------------------------
+Loading data with shape: 100000x128
+99% completedTotal Time: 1.0219s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 0
+Node count: 6667
+Min/Max node occupation: -1/15
+
+Loading query objects with shape: 80x128
+Added 80 query objects
+
+Performing 80 queries with DummyTree
+Single Query Time: 415.517(mili second)
+k = 32
+(91844, 1.1367) (17564, 1.1378) (33805, 1.1449) (18666, 1.1452) (41991, 1.1482) (63406, 1.1485) (63799, 1.1504) (70384, 1.1506) 
+(77743, 1.1546) (29698, 1.1560) (3758, 1.1589) (52268, 1.1609) (68080, 1.1610) (23512, 1.1650) (81694, 1.1650) (20900, 1.1675) 
+(86881, 1.1686) (56749, 1.1710) (71121, 1.1724) (41006, 1.1746) (68221, 1.1753) (35921, 1.1775) (52723, 1.1780) (53850, 1.1781) 
+(5091, 1.1789) (67976, 1.1799) (37578, 1.1799) (9015, 1.1804) (4153, 1.1805) (78378, 1.1839) (19633, 1.1843) (42649, 1.1849) 
+Single Query Time: 416(mili second)
+Single Query Time: 415.4(mili second)
+Single Query Time: 415.2(mili second)
+Single Query Time: 414.7(mili second)
+Single Query Time: 416.7(mili second)
+Single Query Time: 413.5(mili second)
+Single Query Time: 416.6(mili second)
+
+
+Total Time: 3.328e+04(mili second)
+Avg Disk Accesses: 6667
+Avg Distance Calculations: 100000
+
+
+END.
+
+========================================
+========================================
+========================================
+SLIMTREE
+
+Loading data with shape: 100000x4
+99% completedTotal Time: 5.28498s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 3
+Node count: 534
+Min/Max node occupation: 0.25/204
+
+Loading query objects with shape: 80x4
+Added 80 query objects
+
+Performing 80 queries with SlimTree
+Single Query Time: 2.593(mili second)
+k = 32
+(3869, 0.0231) (91867, 0.0239) (39426, 0.0318) (6727, 0.0499) (78287, 0.0543) (95378, 0.0615) (39042, 0.0630) (54259, 0.0632) 
+(15059, 0.0648) (14535, 0.0700) (49160, 0.0807) (27035, 0.0813) (48702, 0.0829) (47964, 0.0862) (68125, 0.0920) (63345, 0.0934) 
+(24460, 0.0938) (78374, 0.0948) (22482, 0.0955) (19473, 0.0984) (72797, 0.1016) (66433, 0.1029) (90539, 0.1034) (65603, 0.1066) 
+(43433, 0.1069) (79517, 0.1110) (10971, 0.1117) (15011, 0.1123) (23681, 0.1167) (2424, 0.1180) (97654, 0.1185) (46619, 0.1231) 
+Single Query Time: 2.341(mili second)
+Single Query Time: 2.63(mili second)
+Single Query Time: 2.528(mili second)
+Single Query Time: 2.298(mili second)
+Single Query Time: 2.51(mili second)
+Single Query Time: 2.323(mili second)
+Single Query Time: 2.839(mili second)
+
+
+Total Time: 192.5(mili second)
+Avg Disk Accesses: 128.7
+Avg Distance Calculations: 8399
+
+
+END.
+---------------------------------------
+Loading data with shape: 100000x8
+99% completedTotal Time: 6.10837s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 3
+Node count: 716
+Min/Max node occupation: 0.25/146
+
+Loading query objects with shape: 80x8
+Added 80 query objects
+
+Performing 80 queries with SlimTree
+Single Query Time: 24.79(mili second)
+k = 32
+(89969, 0.3365) (30098, 0.3373) (45866, 0.3429) (65217, 0.3436) (70893, 0.3448) (36026, 0.3510) (25266, 0.3534) (68772, 0.3550) 
+(7251, 0.3570) (5907, 0.3575) (25068, 0.3616) (97887, 0.3725) (54436, 0.3742) (24251, 0.3758) (74501, 0.3763) (13823, 0.3781) 
+(54799, 0.3787) (31122, 0.3798) (57108, 0.3842) (23880, 0.3876) (20590, 0.3953) (93264, 0.4019) (34653, 0.4025) (64737, 0.4029) 
+(7240, 0.4036) (68331, 0.4054) (3391, 0.4084) (76789, 0.4089) (41779, 0.4089) (86230, 0.4127) (40790, 0.4130) (33953, 0.4148) 
+Single Query Time: 24.51(mili second)
+Single Query Time: 23.35(mili second)
+Single Query Time: 23.74(mili second)
+Single Query Time: 24.65(mili second)
+Single Query Time: 24.56(mili second)
+Single Query Time: 24.19(mili second)
+Single Query Time: 23.66(mili second)
+
+
+Total Time: 1939(mili second)
+Avg Disk Accesses: 612.9
+Avg Distance Calculations: 62004
+
+
+END.
+---------------------------------------
+Loading data with shape: 100000x16
+99% completedTotal Time: 7.38894s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 3
+Node count: 1134
+Min/Max node occupation: 0.25/93
+
+Loading query objects with shape: 80x16
+Added 80 query objects
+
+Performing 80 queries with SlimTree
+Single Query Time: 65.039(mili second)
+k = 32
+(23848, 0.4956) (85713, 0.5394) (16427, 0.5543) (54253, 0.5888) (58366, 0.6071) (98199, 0.6102) (12756, 0.6112) (16970, 0.6211) 
+(25802, 0.6230) (80311, 0.6374) (68010, 0.6432) (22629, 0.6450) (7551, 0.6481) (98086, 0.6508) (12535, 0.6547) (96801, 0.6568) 
+(49712, 0.6600) (86993, 0.6607) (72729, 0.6678) (56134, 0.6680) (54125, 0.6764) (18569, 0.6807) (52377, 0.6808) (18213, 0.6822) 
+(68188, 0.6842) (22065, 0.6851) (64649, 0.6856) (77824, 0.6870) (38077, 0.6918) (55926, 0.6939) (19249, 0.6952) (93833, 0.6953) 
+Single Query Time: 63.1(mili second)
+Single Query Time: 63.57(mili second)
+Single Query Time: 62.7(mili second)
+Single Query Time: 62.94(mili second)
+Single Query Time: 63.03(mili second)
+Single Query Time: 64.21(mili second)
+Single Query Time: 63.28(mili second)
+
+
+Total Time: 5076(mili second)
+Avg Disk Accesses: 1131
+Avg Distance Calculations: 98631
+
+
+END.
+---------------------------------------
+99% completedTotal Time: 10.4224s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 3
+Node count: 2103
+Min/Max node occupation: 0.25/53
+
+Loading query objects with shape: 80x32
+Added 80 query objects
+
+Performing 80 queries with SlimTree
+Single Query Time: 120.186(mili second)
+k = 32
+(39012, 0.8541) (72022, 0.8588) (97966, 0.8621) (77034, 0.8641) (5199, 0.8702) (43414, 0.8740) (6378, 0.8787) (71688, 0.8787) 
+(82336, 0.8853) (60077, 0.8862) (62201, 0.8915) (70115, 0.8932) (91614, 0.8941) (26890, 0.8952) (49897, 0.9018) (49274, 0.9019) 
+(83391, 0.9044) (2429, 0.9168) (87362, 0.9169) (14629, 0.9173) (29331, 0.9195) (64151, 0.9217) (86495, 0.9233) (31970, 0.9243) 
+(55268, 0.9265) (8526, 0.9285) (70457, 0.9292) (93785, 0.9310) (87951, 0.9336) (21445, 0.9365) (87922, 0.9370) (77227, 0.9387) 
+Single Query Time: 120.3(mili second)
+Single Query Time: 118.6(mili second)
+Single Query Time: 115.5(mili second)
+Single Query Time: 116.4(mili second)
+Single Query Time: 116.5(mili second)
+Single Query Time: 116.8(mili second)
+Single Query Time: 119.2(mili second)
+
+
+Total Time: 9388(mili second)
+Avg Disk Accesses: 2103
+Avg Distance Calculations: 100056
+
+
+END.
+---------------------------------------
+Loading data with shape: 100000x64
+99% completedTotal Time: 14.5377s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 4
+Node count: 4280
+Min/Max node occupation: 0.25/29
+
+Loading query objects with shape: 80x64
+Added 80 query objects
+
+Performing 80 queries with SlimTree
+Single Query Time: 233.976(mili second)
+k = 32
+(4263, 1.0095) (35844, 1.0169) (2830, 1.0177) (83982, 1.0307) (29537, 1.0328) (60182, 1.0418) (65407, 1.0418) (85912, 1.0440) 
+(29703, 1.0442) (28609, 1.0488) (13122, 1.0514) (24612, 1.0534) (52852, 1.0592) (97782, 1.0632) (6143, 1.0637) (51888, 1.0651) 
+(10302, 1.0657) (48079, 1.0715) (21707, 1.0729) (21644, 1.0745) (57706, 1.0747) (83360, 1.0758) (80957, 1.0789) (56782, 1.0791) 
+(65739, 1.0812) (84567, 1.0813) (63630, 1.0819) (73830, 1.0824) (69206, 1.0830) (50540, 1.0845) (61799, 1.0852) (16290, 1.0858) 
+Single Query Time: 233.5(mili second)
+Single Query Time: 240(mili second)
+Single Query Time: 233.9(mili second)
+Single Query Time: 233.9(mili second)
+Single Query Time: 233.1(mili second)
+Single Query Time: 231(mili second)
+Single Query Time: 234.2(mili second)
+
+
+Total Time: 1.884e+04(mili second)
+Avg Disk Accesses: 4280
+Avg Distance Calculations: 100186
+
+
+END.
+---------------------------------------
+Loading data with shape: 100000x128
+99% completedTotal Time: 21.9689s.
+Added 100000 objects to tree (100000)
+
+Height of Tree: 5
+Node count: 12183
+Min/Max node occupation: 0.25/15
+
+Loading query objects with shape: 80x128
+Added 80 query objects
+
+Performing 80 queries with SlimTree
+Single Query Time: 460.989(mili second)
+k = 32
+(91844, 1.1367) (17564, 1.1378) (33805, 1.1449) (18666, 1.1452) (41991, 1.1482) (63406, 1.1485) (63799, 1.1504) (70384, 1.1506) 
+(77743, 1.1546) (29698, 1.1560) (3758, 1.1589) (52268, 1.1609) (68080, 1.1610) (23512, 1.1650) (81694, 1.1650) (20900, 1.1675) 
+(86881, 1.1686) (56749, 1.1710) (71121, 1.1724) (41006, 1.1746) (68221, 1.1753) (35921, 1.1775) (52723, 1.1780) (53850, 1.1781) 
+(5091, 1.1789) (67976, 1.1799) (37578, 1.1799) (9015, 1.1804) (4153, 1.1805) (78378, 1.1839) (19633, 1.1843) (42649, 1.1849) 
+Single Query Time: 461.8(mili second)
+Single Query Time: 462.2(mili second)
+Single Query Time: 462.6(mili second)
+Single Query Time: 462(mili second)
+Single Query Time: 462(mili second)
+Single Query Time: 462(mili second)
+Single Query Time: 461.2(mili second)
+
+
+Total Time: 3.742e+04(mili second)
+Avg Disk Accesses: 1.129e+04
+Avg Distance Calculations: 100910
+
+
+END.

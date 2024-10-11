@@ -72,7 +72,7 @@ public:
     * This is the type of the Slim-Tree defined by TCity and
     * TCityDistanceEvaluator.
     */
-   typedef stSlimTree<myArray, euclideanDistance> mySlimTree;
+   typedef stDummyTree<myArray, euclideanDistance> myDummyTree;
 
    /**
     * Creates a new instance of this class.

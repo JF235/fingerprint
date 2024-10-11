@@ -2,6 +2,7 @@ real_docker.sh
 *.pyc
 *.pkl
 *.dat
+*.npy
 *.o
 main
 settings.json
