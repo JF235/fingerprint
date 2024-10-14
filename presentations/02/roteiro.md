@@ -52,6 +52,10 @@ Lista dos pixels:
 
 ## Busca Sequencial: Imagem Inteira 2722x2009
 
+Bulb Fields
+
+Flower Beds in Holland
+
 ![](imgs/vangogh.jpg)
 
 - Dados
@@ -311,7 +315,6 @@ Obsevações:
 - Inclusive o número de acessos ao disco pode ser uma das causas (não sei como é a implementação)
 - \* Melhor caso
 
-
 # Busca vetores unitários aleatórios
 
 Como se comporta essa busca em vetores unitários aleatórios?
@@ -342,8 +345,8 @@ Considerando 100k amostras
 
 |Resultados\Dimensão|128|64|32|16|8|4|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-|1 query* (ms)|76|37|21|13|8.5|6.7|
-|80 queries (ms)|7044|3378|1943|1446|843|570|
+|1 query* (ms)|76|37|21|13|8.1|6.7|
+|80 queries (ms)|7044|3378|1943|1123|715|570|
 
 \* Mediana
 
@@ -376,3 +379,58 @@ Com páginas de tamanho: 1024*8
 |# dist |100910|100186|100056|98631|62004|8399|
 
 Com outros tamanhos de página, não consegui nada muito diferente.
+
+Observação: Quando o número de acessos de disco cai, o número de cálculos de distância sobe em média.
+
+Observação 2: Existem duas coisas interconectadas quando analisamos o número de acessos a disco e o número de cálculos de distância. O número de cálculos de distância permanece mais ou menos fixo, isso pode ser pela degradação da SlimTree para alta dimensionalidade.
+
+## Distância Cosseno
+
+A distância cosseno não é uma métrica uma vez que não obedece a desigualdade triangular. De qualquer maneira, quando usei a distância cosseno, os resultados da busca foram os mesmos.
+
+Comparando sua performance ([cosdist.txt](cosdist.txt))
+
+|Resultados\Dimensão|128|64|32|16|8|4|
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|1 query* (ms)|420|220|110|33|7|0.6|
+|80 queries (ms)|33426|17969|9100|2791|574|59|
+|# disk acc |418|437|234|243|207|78|
+|# dist |100007|99902|93904|57419|16612|1629|
+
+# Outras estruturas
+
+https://github.com/erikbern/ann-benchmarks
+
+- KDTree (Python)
+
+|Resultados\Dimensão|128|64|32|16|8|4|
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|80 queries (ms)|4021|2467|1500|951|117|5|
+
+- Annoy (C++/Python)
+
+https://calmcode.io/course/annoy/how-it-works-1
+
+Para `n_trees=500`
+
+|Resultados\Dimensão|128|64|32|16|8|4|
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|80 queries (ms)|485|427|429|475|486|463|
+
+\* Aproximado. Qualidade depende do número de árvores.
+
+- MVP Tree
+
+DISTANCE-BASED INDEXING FOR HIGH-DIMENSIONAL METRIC SPACES
+
+- iDistance
+
+On the theory and practice of high-dimensional data indexing with iDistance
+
+iDistance: An Adaptive B+-tree Based Indexing Method for Nearest Neighbor Search
+
+https://code.google.com/archive/p/idistance/
+
+https://www.ruizhang.info/code.htm
+
+- XTree
