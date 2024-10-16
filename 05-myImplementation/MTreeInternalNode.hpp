@@ -5,7 +5,10 @@
 
 template <typename T>
 InternalNode<T>::InternalNode(size_t nodeId, size_t maxCapacity, bool isRoot, typename Node<T>::NodePtr parentNode, typename Node<T>::TreeObjectPtr parentRoutingObj)
-    : Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj) {}
+    : Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj) 
+    {
+        this->isLeaf = false;
+    }
 
 // Insert element into the internal node
 template <typename T>
@@ -66,13 +69,6 @@ void InternalNode<T>::insert(const T &element, std::function<double(const T &, c
     bestRoutingObject->getSubtree()->insert(element, distance);
 }
 
-// isLeaf function for internal node
-template <typename T>
-bool InternalNode<T>::isLeaf() const
-{
-    return false;
-}
-
 // createNewNode function for internal node
 template <typename T>
 typename Node<T>::NodePtr InternalNode<T>::createNewNode(size_t nodeId) const
@@ -91,16 +87,63 @@ typename Node<T>::NodePtr InternalNode<T>::createNewRootNode(size_t nodeId) cons
 template <typename T>
 void InternalNode<T>::getRepr(std::ostream &os) const
 {
-    os << " with " << this->entries.size() << " elements";
+    for (size_t i = 0; i < this->entries.size(); i++)
+    {
+        os << "(" << this->entries[i]->getRepresentative() << ":" << this->entries[i]->getCoveringRadius() << ")";
+        // Check if null
+        if (this->entries[i]->getSubtree() == nullptr)
+        {
+            os << "*";
+        }
+        os << " ";
+    }
+
+    // Recurse down the tree
+    for (size_t i = 0; i < this->entries.size(); i++)
+    {
+        if (this->entries[i]->getSubtree() != nullptr)
+        {
+            os << "\n";
+            this->entries[i]->getSubtree()->getRepr(os);
+        }
+    }
 }
 
 // updateRoutingObject function for internal node
 template <typename T>
 void InternalNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> entries, std::shared_ptr<Node<T>> childNode, std::shared_ptr<Node<T>> parentNode, std::function<double(const T &, const T &)> distance)
 {
-    // Do nothing
-    int a = 0;
-    a++;
+    // This is called when a promoted routing object "p" is stored in the new Node "node"
+    // For this to be suceeded
+    // 1. The new covering radius of p is max{d(p, r) + rad(r) | for r in entries}, remembring r is a route object and rad(r) is the covering radius of r
+    // 2. The subtree of p is "node"
+    // 3. The distanceToParent of p is d(p, p1) where p1 is the entry in entries that maximizes d(p, p1)
+
+    // 1.
+    double maxDistance = 0.0;
+    for (const auto &entry : entries)
+    {
+        // This overestimates the covering radius of p, but guarantees that it will cover all entries
+        double dist = distance(p->getRepresentative(), entry->getRepresentative()) + entry->getCoveringRadius();
+        if (dist > maxDistance)
+        {
+            maxDistance = dist;
+        }
+    }
+    p->setCoveringRadius(maxDistance);
+
+    // 2.
+    p->setSubtree(childNode);
+
+    // 3.
+    // If its parent is the root
+
+    // Now the nodes must be update also
+    parentNode->getEntries().push_back(p);
+    // maybe check if its full
+
+    childNode->setParentNode(parentNode);
+    childNode->setParentRoutingObj(p);
 }
 
 #endif // MTREEINTERNALNODE_HPP

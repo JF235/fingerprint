@@ -28,7 +28,6 @@ public:
     virtual ~Node() = default;
 
     virtual void insert(const T &element, std::function<double(const T &, const T &)> distance) = 0;
-    virtual bool isLeaf() const = 0;
 
     size_t getNodeId() const { return nodeId; }
     bool getIsRoot() const { return isRoot; }
@@ -39,6 +38,7 @@ public:
     void setParentRoutingObj(TreeObjectPtr parentRoutingObj) { this->parentRoutingObj = parentRoutingObj; }
     std::vector<TreeObjectPtr>& getEntries() { return entries; }
     const std::vector<TreeObjectPtr>& getEntries() const { return entries; }
+    bool getIsLeaf() const { return isLeaf; }
     virtual NodePtr createNewNode(size_t nodeId) const = 0;
     virtual NodePtr createNewRootNode(size_t nodeId) const = 0;
     
@@ -54,10 +54,10 @@ public:
             {
                 os << "(Root)";
             }
-            if (node.isLeaf()){
+            if (node.getIsLeaf()){
                 os << "[" << node.entries[i]->getRepresentative() << "]";
             } else {
-                os << "(" << node.entries[i]->getRepresentative() << ")";
+                os << "(" << node.entries[i]->getRepresentative() << ":" << node.entries[i]->getCoveringRadius() <<  ")";
             }
             // Check if null
             if (node.entries[i]->getSubtree() == nullptr)
@@ -183,6 +183,22 @@ public:
             }
             else
             {
+                // Link new node to parent routing object p2
+                double maxDistance = 0.0;
+                for (const auto &entry : entries2)
+                {
+                    double dist = distance(p2->getRepresentative(), entry->getRepresentative());
+                    if (dist > maxDistance)
+                    {
+                        maxDistance = dist;
+                    }
+                }
+                p2->setCoveringRadius(maxDistance);
+
+                // The tree will grow in height and 
+                p2->setSubtree(newNode);
+                newNode->setParentRoutingObj(p2);
+
                 // Split parent node
                 parentNode->split(p2, distance);
             }
@@ -193,6 +209,7 @@ protected:
     size_t nodeId;
     size_t maxCapacity;
     bool isRoot;
+    bool isLeaf;
     std::vector<TreeObjectPtr> entries;
     NodePtr parentNode;
     TreeObjectPtr parentRoutingObj;
@@ -235,8 +252,6 @@ public:
 
     void insert(const T &element, std::function<double(const T &, const T &)> distance) override;
 
-    bool isLeaf() const override;
-
     // Create New Node
     typename Node<T>::NodePtr createNewNode(size_t nodeId) const override;
 
@@ -263,8 +278,6 @@ public:
     InternalNode(size_t nodeId, size_t maxCapacity, bool isRoot, NodePtr parentNode, TreeObjectPtr parentRoutingObj);
 
     void insert(const T &element, std::function<double(const T &, const T &)> distance) override;
-
-    bool isLeaf() const override;
 
     // Create New Node
     typename Node<T>::NodePtr createNewNode(size_t nodeId) const override;

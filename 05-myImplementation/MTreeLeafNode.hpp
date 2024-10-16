@@ -5,7 +5,10 @@
 
 template <typename T>
 LeafNode<T>::LeafNode(size_t nodeId, size_t maxCapacity, bool isRoot, typename Node<T>::NodePtr parentNode, typename Node<T>::TreeObjectPtr parentRoutingObj)
-    : Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj) {}
+    : Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj) 
+    {
+        this->isLeaf = true;
+    }
 
 template <typename T>
 void LeafNode<T>::insert(const T &element, std::function<double(const T &, const T &)> distance)
@@ -22,12 +25,6 @@ void LeafNode<T>::insert(const T &element, std::function<double(const T &, const
         this->split(std::make_shared<LeafObject<T>>(element, 0.0), distance);
         // Check if root has to be updated
     }
-}
-
-template <typename T>
-bool LeafNode<T>::isLeaf() const
-{
-    return true;
 }
 
 // Create New Node
