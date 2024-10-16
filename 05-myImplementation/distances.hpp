@@ -1,10 +1,13 @@
 #ifndef DISTANCES_HPP
 #define DISTANCES_HPP
 
+#include <iostream> // For std::cerr
 #include <vector>
 #include <cmath>
 #include <numeric> // For std::inner_product
 #include <stdexcept> // For std::invalid_argument
+
+unsigned long int distanceFunctionCalls = 0;
 
 /**
  * @brief Computes the Euclidean distance between two vectors.
@@ -17,6 +20,7 @@
  */
 template <typename T>
 inline float euclideanDistance(const T& a, const T& b) {
+    distanceFunctionCalls++;
     if (a.size() != b.size()) {
         throw std::invalid_argument("Vectors must be of the same size");
     }
@@ -40,6 +44,7 @@ inline float euclideanDistance(const T& a, const T& b) {
  */
 template <typename T>
 inline float manhattanDistance(const T& a, const T& b) {
+    distanceFunctionCalls++;
     if (a.size() != b.size()) {
         throw std::invalid_argument("Vectors must be of the same size");
     }
@@ -62,6 +67,7 @@ inline float manhattanDistance(const T& a, const T& b) {
  */
 template <typename T>
 inline float chebyshevDistance(const T& a, const T& b) {
+    distanceFunctionCalls++;
     if (a.size() != b.size()) {
         throw std::invalid_argument("Vectors must be of the same size");
     }
@@ -87,6 +93,7 @@ inline float chebyshevDistance(const T& a, const T& b) {
  */
 template <typename T>
 inline float cosineDistance(const T& a, const T& b) {
+    distanceFunctionCalls++;
     if (a.size() != b.size()) {
         throw std::invalid_argument("Vectors must be of the same size");
     }
@@ -114,6 +121,7 @@ inline float cosineDistance(const T& a, const T& b) {
  */
 template <typename T>
 inline float normalizedCosineDistance(const T& a, const T& b) {
+    distanceFunctionCalls++;
     if (a.size() != b.size()) {
         throw std::invalid_argument("Vectors must be of the same size");
     }
