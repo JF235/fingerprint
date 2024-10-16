@@ -32,10 +32,17 @@ public:
 
     size_t getNodeId() const { return nodeId; }
     bool getIsRoot() const { return isRoot; }
-    NodePtr getParentNode() const { return parentNode; }
     void setIsRoot(bool root) { isRoot = root; }
+    NodePtr getParentNode() const { return parentNode; }
+    void setParentNode(NodePtr parentNode) { this->parentNode = parentNode; }
+    TreeObjectPtr getParentRoutingObj() const { return parentRoutingObj; }
+    void setParentRoutingObj(TreeObjectPtr parentRoutingObj) { this->parentRoutingObj = parentRoutingObj; }
+    std::vector<TreeObjectPtr>& getEntries() { return entries; }
+    const std::vector<TreeObjectPtr>& getEntries() const { return entries; }
     virtual NodePtr createNewNode(size_t nodeId) const = 0;
     virtual NodePtr createNewRootNode(size_t nodeId) const = 0;
+    
+    virtual void updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> entries, std::shared_ptr<Node<T>> childNode, std::shared_ptr<Node<T>> parentNode, std::function<double(const T &, const T &)> distance) = 0;
     virtual void getRepr(std::ostream &os) const = 0;
 
     // Overload of output stream operator
@@ -129,61 +136,50 @@ public:
             // Create a new root node and store the new routing objects
             maxNodeId = maxNodeId + 1;
             auto newRoot = createNewRootNode(maxNodeId);
+            newRoot->setIsRoot(true);
             DEBUG_MSG("Splitting in the root: create a level new root node " << newRoot->getNodeId());
 
             // For each new routing object (p1, p2), update coveringRadius, subtree and distanceToParent
-            
             // The new covering radius of p1 is max{d(p, p1) | for p in entries1}
-            double maxDistance1 = 0.0;
-            for (const auto &entry : entries1)
-            {
-                double dist = distance(p1->getRepresentative(), entry->getRepresentative());
-                if (dist > maxDistance1)
-                {
-                    maxDistance1 = dist;
-                }
-            }
-            p1->setCoveringRadius(maxDistance1);
-            p1->setSubtree(this->shared_from_this());
+            updateRoutingObject(p1, entries1, this->shared_from_this(), newRoot, distance);
 
-            // The same for p2
-            double maxDistance2 = 0.0;
-            for (const auto &entry : entries2)
-            {
-                double dist = distance(p2->getRepresentative(), entry->getRepresentative());
-                if (dist > maxDistance2)
-                {
-                    maxDistance2 = dist;
-                }
-            }
-            p2->setCoveringRadius(maxDistance2);
-            p2->setSubtree(newNode);
+            updateRoutingObject(p2, entries2, newNode, newRoot, distance);
 
-
-            newRoot->setIsRoot(true);
-            newRoot->entries.push_back(p1);
-            newRoot->entries.push_back(p2);
-
-            // Set newRoot as parent of this and newNode
-            this->parentNode = newRoot;
-            newNode->parentNode = newRoot;
-
-            // Set p1 and p2 as parentRoutingObj of this and newNode
-            this->parentRoutingObj = p1;
-            newNode->parentRoutingObj = p2;
+            DEBUG_MSG(nodeId << " was parented to " << parentNode->getNodeId());
+            DEBUG_MSG(p1->getSubtree()->getNodeId() << " is linked to object " << p1->getRepresentative() << " with covering radius " << p1->getCoveringRadius());
+            
+            DEBUG_MSG(newNode->getNodeId() << " was parented to " << newNode->getParentNode()->getNodeId());
+            DEBUG_MSG(p2->getSubtree()->getNodeId() << " is linked to object " << p2->getRepresentative() << " with covering radius " << p2->getCoveringRadius());
 
             // Reset flag of the old root
             isRoot = false;
         }
         else
         {
-            // Replace parentRoutingObj with p1
-            parentRoutingObj = p1;
+            // Replace the parentRoutingObj with p1
+            for (auto &entry : parentNode->entries)
+            {
+                if (entry == parentRoutingObj)
+                {
+                    // Remove entry from parent node
+                    parentNode->entries.erase(std::remove(parentNode->entries.begin(), parentNode->entries.end(), parentRoutingObj), parentNode->entries.end());
+                    
+                    // Store p1 in parent
+                    updateRoutingObject(p1, entries1, this->shared_from_this(), parentNode, distance);
+
+                    DEBUG_MSG(nodeId << " was parented to " << parentNode->getNodeId());
+                    DEBUG_MSG(p1->getSubtree()->getNodeId() << " is linked to object " << p1->getRepresentative() << " with covering radius " << p1->getCoveringRadius());
+                    break;
+                }
+            }
+
             // Check if parent node is full
             if (parentNode->entries.size() < maxCapacity)
             {
                 // Store p2 in parent
-                parentNode->entries.push_back(p2);
+                updateRoutingObject(p2, entries2, newNode, parentNode, distance);
+                DEBUG_MSG(newNode->getNodeId() << " was parented to " << newNode->getParentNode()->getNodeId());
+                DEBUG_MSG(p2->getSubtree()->getNodeId() << " is linked to object " << p2->getRepresentative() << " with covering radius " << p2->getCoveringRadius());
             }
             else
             {
@@ -232,57 +228,24 @@ template <typename T>
 class LeafNode : public Node<T>
 {
 public:
-    LeafNode(size_t nodeId, size_t maxCapacity, bool isRoot = false, typename Node<T>::NodePtr parentNode = nullptr, typename Node<T>::TreeObjectPtr parentRoutingObj = nullptr)
-        : Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj) {}
+    typedef typename Node<T>::TreeObjectPtr TreeObjectPtr;
+    typedef typename Node<T>::NodePtr NodePtr;
 
-    void insert(const T &element, std::function<double(const T &, const T &)> distance) override
-    {
-        if (this->entries.size() < this->maxCapacity)
-        {
-            this->entries.push_back(std::make_shared<LeafObject<T>>(element, 0.0)); // distanceToParent is 0.0 for new elements
-            DEBUG_MSG("Inserted element " << element << " into the leaf node " << this->getNodeId());
-            DEBUG_MSG("Leaf node " << this->getNodeId() << " has now " << this->entries.size() << " elements");
-        }
-        else
-        {
-            DEBUG_MSG("Leaf node " << this->getNodeId() << " is full. Cannot insert element " << element);
-            this->split(std::make_shared<LeafObject<T>>(element, 0.0), distance);
-            // Check if root has to be updated
+    LeafNode(size_t nodeId, size_t maxCapacity, bool isRoot,NodePtr parentNode, TreeObjectPtr parentRoutingObj);
 
-        }
-    }
+    void insert(const T &element, std::function<double(const T &, const T &)> distance) override;
 
-    bool isLeaf() const override
-    {
-        return true;
-    }
+    bool isLeaf() const override;
 
     // Create New Node
-    typename Node<T>::NodePtr createNewNode(size_t nodeId) const override
-    {
-        return std::make_shared<LeafNode<T>>(nodeId, this->maxCapacity, false, this->parentNode, this->parentRoutingObj);
-    }
-
+    typename Node<T>::NodePtr createNewNode(size_t nodeId) const override;
 
     // Create New Root Node
-    typename Node<T>::NodePtr createNewRootNode(size_t nodeId) const override
-    {
-        return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, false, this->parentNode, this->parentRoutingObj);
-    }
+    typename Node<T>::NodePtr createNewRootNode(size_t nodeId) const override;
 
-    void getRepr(std::ostream &os) const override
-    {
-        for (size_t i = 0; i < this->entries.size(); i++)
-        {
-            os << "[" << this->entries[i]->getRepresentative() << "]";
-            // Check if null
-            if (this->entries[i]->getSubtree() == nullptr)
-            {
-                os << "*";
-            }
-            os << " ";
-        }
-    }
+    void updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> entries, std::shared_ptr<Node<T>> childNode, std::shared_ptr<Node<T>> parentNode, std::function<double(const T &, const T &)> distance) override;
+
+    void getRepr(std::ostream &os) const override;
 };
 
 /**
@@ -294,81 +257,27 @@ template <typename T>
 class InternalNode : public Node<T>
 {
 public:
-    InternalNode(size_t nodeId, size_t maxCapacity, bool isRoot = false, typename Node<T>::NodePtr parentNode = nullptr, typename Node<T>::TreeObjectPtr parentRoutingObj = nullptr)
-        :  Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj) {}
+    typedef typename Node<T>::TreeObjectPtr TreeObjectPtr;
+    typedef typename Node<T>::NodePtr NodePtr;
 
-    void insert(const T &element, std::function<double(const T &, const T &)> distance) override
-    {
-        RoutingObject<T> *bestRoutingObject = nullptr;
+    InternalNode(size_t nodeId, size_t maxCapacity, bool isRoot, NodePtr parentNode, TreeObjectPtr parentRoutingObj);
 
-        // The entry that the new object fits into
-        RoutingObject<T> *bestRoutingObjectFit = nullptr;
-        double minDistance = std::numeric_limits<double>::max();
+    void insert(const T &element, std::function<double(const T &, const T &)> distance) override;
 
-        // The entry that will require the smallest increment in its covering radius
-        RoutingObject<T> *bestRoutingObjectExpand = nullptr;
-        double minRadiusIncrement = std::numeric_limits<double>::max();
-
-        /* Look for entries that the new object fits into
-        If there are no such entry, then look for an object with minimal distance from its covering radius's edge to the new object */
-        for (auto &routingObject : this->entries)
-        {
-            double dist = distance(routingObject->getRepresentative(), element);
-            if (dist <= routingObject->getCoveringRadius())
-            {
-                // Found an entry that the new object fits into
-                if (dist < minDistance)
-                {
-                    // The closest entry
-                    minDistance = dist;
-                    bestRoutingObjectFit = dynamic_cast<RoutingObject<T> *>(routingObject.get());
-                }
-            }
-            else if (!bestRoutingObjectFit)
-            {
-                // Still not found an entry that the new object fits into
-                double radiusIncrement = dist - routingObject->getCoveringRadius();
-                if (radiusIncrement < minRadiusIncrement)
-                {
-                    // This is the entry that will require the smallest increment in its covering radius
-                    minRadiusIncrement = radiusIncrement;
-                    bestRoutingObjectExpand = dynamic_cast<RoutingObject<T> *>(routingObject.get());
-                }
-            }
-        }
-
-        if (bestRoutingObjectFit)
-        {
-            // If it fits into an existing entry, just insert it into the corresponding subtree
-            bestRoutingObject = bestRoutingObjectFit;
-        }
-        else
-        {
-            // If it doesn't fit into any existing entry, upgrade the new radii of the entry
-            bestRoutingObjectExpand->setCoveringRadius(bestRoutingObjectExpand->getCoveringRadius() + minRadiusIncrement);
-
-            bestRoutingObject = bestRoutingObjectExpand;
-        }
-
-        // Continue inserting in the next level
-        bestRoutingObject->getSubtree()->insert(element, distance);
-    }
-
-    bool isLeaf() const override
-    {
-        return false;
-    }
+    bool isLeaf() const override;
 
     // Create New Node
-    typename Node<T>::NodePtr createNewNode(size_t nodeId) const override
-    {
-        return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, false, this->parentNode, this->parentRoutingObj);
-    }
+    typename Node<T>::NodePtr createNewNode(size_t nodeId) const override;
 
-    void getRepr(std::ostream &os) const override
-    {
-        os << " with " << this->entries.size() << " elements";
-    }
+    // Create New Root Node
+    typename Node<T>::NodePtr createNewRootNode(size_t nodeId) const override;
+
+    void updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> entries, std::shared_ptr<Node<T>> childNode, std::shared_ptr<Node<T>> parentNode, std::function<double(const T &, const T &)> distance) override;
+
+    void getRepr(std::ostream &os) const override;
 };
+
+#include "MTreeInternalNode.hpp"
+#include "MTreeLeafNode.hpp"
 
 #endif // MTREENODES_HPP

@@ -24,12 +24,11 @@ public:
     MTree(size_t maxNodeCapacity, std::function<double(const T&, const T&)> distance)
         : maxNodeCapacity(maxNodeCapacity), distance(distance), nextNodeId(0) {
         // Cria o primeiro nó como folha e raiz
-        root = std::make_shared<LeafNode<T>>(nextNodeId++, maxNodeCapacity, true);
+        root = std::make_shared<LeafNode<T>>(nextNodeId++, maxNodeCapacity, true, nullptr, nullptr);
     }
 
     void insert(const T& element) {
         DEBUG_MSG("Inserting element " << element << " into the node " << root->getNodeId());
-        maxNodeId = nextNodeId - 1;
         root->insert(element, distance);
         
         // Check if root has to be updated

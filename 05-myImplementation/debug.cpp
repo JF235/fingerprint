@@ -9,6 +9,9 @@ int main(){
     FloatNumber b(2.0);
     FloatNumber c(3.0);
     FloatNumber d(4.0);
+    FloatNumber e(1.5);
+    FloatNumber f(3.5);
+    FloatNumber g(1.7);
 
     // Create a tree which element is float and distance function is manhattanDistance
     MTree<FloatNumber> mtree(3, manhattanDistance<FloatNumber>);
@@ -21,6 +24,15 @@ int main(){
     std::cout << mtree << std::endl;
 
     mtree.insert(d);
+
+    std::cout << mtree << std::endl;
+
+    mtree.insert(e);
+    mtree.insert(f);
+    
+    std::cout << mtree << std::endl;
+
+    mtree.insert(g);
 
     std::cout << mtree << std::endl;
 
