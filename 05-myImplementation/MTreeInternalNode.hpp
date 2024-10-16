@@ -10,7 +10,6 @@ InternalNode<T>::InternalNode(size_t nodeId, size_t maxCapacity, bool isRoot, ty
         this->isLeaf = false;
     }
 
-// Insert element into the internal node
 template <typename T>
 void InternalNode<T>::insert(const T &element, std::function<double(const T &, const T &)> distance)
 {
@@ -69,21 +68,18 @@ void InternalNode<T>::insert(const T &element, std::function<double(const T &, c
     bestRoutingObject->getSubtree()->insert(element, distance);
 }
 
-// createNewNode function for internal node
 template <typename T>
 typename Node<T>::NodePtr InternalNode<T>::createNewNode(size_t nodeId) const
 {
     return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, false, this->parentNode, this->parentRoutingObj);
 }
 
-// Create New Root Node
 template <typename T>
 typename Node<T>::NodePtr InternalNode<T>::createNewRootNode(size_t nodeId) const
 {
     return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, false, this->parentNode, this->parentRoutingObj);
 }
 
-// getRepr function for internal node
 template <typename T>
 void InternalNode<T>::getRepr(std::ostream &os) const
 {

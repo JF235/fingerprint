@@ -4,14 +4,14 @@
 #include "MTreeNodes.hpp"
 
 template <typename T>
-LeafNode<T>::LeafNode(size_t nodeId, size_t maxCapacity, bool isRoot, typename Node<T>::NodePtr parentNode, typename Node<T>::TreeObjectPtr parentRoutingObj)
+LeafNode<T>::LeafNode(size_t nodeId, size_t maxCapacity, bool isRoot, NodePtr parentNode, TreeObjectPtr parentRoutingObj)
     : Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj) 
     {
         this->isLeaf = true;
     }
 
 template <typename T>
-void LeafNode<T>::insert(const T &element, std::function<double(const T &, const T &)> distance)
+void LeafNode<T>::insert(const T &element, Metric distance)
 {
     if (this->entries.size() < this->maxCapacity)
     {
@@ -29,14 +29,14 @@ void LeafNode<T>::insert(const T &element, std::function<double(const T &, const
 
 // Create New Node
 template <typename T>
-typename Node<T>::NodePtr LeafNode<T>::createNewNode(size_t nodeId) const
+typename LeafNode<T>::NodePtr LeafNode<T>::createNewNode(size_t nodeId) const
 {
     return std::make_shared<LeafNode<T>>(nodeId, this->maxCapacity, false, this->parentNode, this->parentRoutingObj);
 }
 
 // Create New Root Node
 template <typename T>
-typename Node<T>::NodePtr LeafNode<T>::createNewRootNode(size_t nodeId) const
+typename LeafNode<T>::NodePtr LeafNode<T>::createNewRootNode(size_t nodeId) const
 {
     return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, false, this->parentNode, this->parentRoutingObj);
 }
@@ -57,7 +57,7 @@ void LeafNode<T>::getRepr(std::ostream &os) const
 }
 
 template <typename T>
-void LeafNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> entries, std::shared_ptr<Node<T>> childNode, std::shared_ptr<Node<T>> parentNode, std::function<double(const T &, const T &)> distance)
+void LeafNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> entries, std::shared_ptr<Node<T>> childNode, NodePtr parentNode, Metric distance)
 {
     // This is called when a promoted routing object "p" is stored in the new Node "node"
     // For this to be suceeded
