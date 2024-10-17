@@ -20,7 +20,9 @@ void LeafNode<T>::insert(const T &element, Metric distance)
         {
             // If it is root, set d(element, parent) = inf
             this->entries.emplace_back(std::make_shared<LeafObject<T>>(element, std::numeric_limits<float>::infinity()));
-            INSDEBUG_MSG("Inserted [element: " << element << ", distance: inf] " <<  "into root node [id: " << this->getNodeId() << ", size: " << this->entries.size() << "]");
+
+            // @TODO: (Remove) Get pointer value
+            INSDEBUG_MSG("Inserted [element: " << element << "<" << this->entries.back() << ">" << ", distance: inf] " <<  "into root node [id: " << this->getNodeId() << ", size: " << this->entries.size() << "]");
             return;
         }
         else
@@ -29,7 +31,7 @@ void LeafNode<T>::insert(const T &element, Metric distance)
             double dist = distance(element, this->parentRoutingObj->getRepresentative());
 
             this->entries.emplace_back(std::make_shared<LeafObject<T>>(element, dist)); // distanceToParent is inf for new elements
-            INSDEBUG_MSG("Inserted [element: " << element << ", dist2parent: " << dist << "] into node [id: " << this->getNodeId() << ", size: " << this->entries.size() << ", parent: " << this->parentRoutingObj->getRepresentative() << "]");
+            INSDEBUG_MSG("Inserted [element: " << element << "<" << this->entries.back() << ">" << ", dist2parent: " << dist << "] into node [id: " << this->getNodeId() << ", size: " << this->entries.size() << ", parent: " << this->parentRoutingObj->getRepresentative() << "]");
         }
 
     }
@@ -58,9 +60,11 @@ typename LeafNode<T>::NodePtr LeafNode<T>::createNewRootNode(size_t nodeId) cons
 template <typename T>
 void LeafNode<T>::getRepr(std::ostream &os) const
 {
+    os << this->getNodeId() << " ";
+    os << this->getParentNode()->getNodeId();
     for (size_t i = 0; i < this->entries.size(); i++)
     {
-        os << "[" << this->entries[i]->getRepresentative() << "]";
+        os << "[" << this->entries[i]->getRepresentative() << "<" << this->entries[i] << ">]";
         // Check if null
         if (this->entries[i]->getSubtree() == nullptr)
         {
@@ -71,7 +75,7 @@ void LeafNode<T>::getRepr(std::ostream &os) const
 }
 
 template <typename T>
-void LeafNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> entries, NodePtr childNode, NodePtr parentNode, Metric distance)
+void LeafNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> &entries, NodePtr childNode, NodePtr parentNode, Metric distance)
 {
     // This is called when a promoted routing object "p" is stored in the new Node "parentNode"
     // For this to be suceeded...

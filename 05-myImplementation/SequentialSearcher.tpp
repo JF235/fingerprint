@@ -13,7 +13,7 @@ NNList<T> SequentialSearcher<T, DistanceFunc>::knn(const T &query, size_t k) con
 
     for (const auto &obj : dataObjects)
     {
-        float dist = distanceFunc(query, obj);
+        double dist = distanceFunc(query, obj);
 
         // nnList.insert
         nnList.insert(obj, dist);
@@ -43,13 +43,13 @@ size_t SequentialSearcher<T, DistanceFunc>::size() const
     return dataObjects.size();
 }
 
-// Overload of the << operator for printing the SequentialSearcher
+//Overload of the << operator for printing the SequentialSearcher
 template <typename T, typename DistanceFunc>
 std::ostream &operator<<(std::ostream &os, const SequentialSearcher<T, DistanceFunc> &searcher)
 {
-    os << "SequentialSearcher with objects of type: " << typeid(T).name() << "\n";
-    os << "Using distance function: " << typeid(DistanceFunc).name() << "\n";
-    os << "Data objects:\n";
+    // os << "SequentialSearcher with objects of type: " << typeid(T).name() << "\n";
+    // os << "Using distance function: " << typeid(DistanceFunc).name() << "\n";
+    // os << "Data objects:\n";
     for (const auto &obj : searcher.dataObjects)
     {
         os << obj << "\n";

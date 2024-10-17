@@ -82,10 +82,12 @@ typename InternalNode<T>::NodePtr InternalNode<T>::createNewRootNode(size_t node
 
 template <typename T>
 void InternalNode<T>::getRepr(std::ostream &os) const
-{
+{   
+    os << this->getNodeId() << " ";
+    os << this->getParentNode()->getNodeId();
     for (size_t i = 0; i < this->entries.size(); i++)
     {
-        os << "(" << this->entries[i]->getRepresentative() << ":" << this->entries[i]->getCoveringRadius() << ")";
+        os << "(" << this->entries[i]->getRepresentative() << "<" << this->entries[i] << ">:" << this->entries[i]->getCoveringRadius() << ")";
         // Check if null
         if (this->entries[i]->getSubtree() == nullptr)
         {
@@ -107,7 +109,7 @@ void InternalNode<T>::getRepr(std::ostream &os) const
 
 // updateRoutingObject function for internal node
 template <typename T>
-void InternalNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> entries, NodePtr childNode, NodePtr parentNode, Metric distance)
+void InternalNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> &entries, NodePtr childNode, NodePtr parentNode, Metric distance)
 {
     // This is called when a promoted routing object "p" is stored in the new Node "node"
     // For this to be suceeded
@@ -126,6 +128,9 @@ void InternalNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjec
             maxDistance = dist + entry->getCoveringRadius();
         }
         entry->setDistanceToParent(dist);
+
+        // Add the entry to the childNode
+        //childNode->getEntries().push_back(entry);
     }
     p->setCoveringRadius(maxDistance);
 

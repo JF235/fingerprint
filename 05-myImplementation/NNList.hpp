@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <limits>
+#include <ostream> // For std::ostream
+#include <cstddef> // For std::size_t
 
 /**
  * @brief Represents an entry in the nearest neighbors list.

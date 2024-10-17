@@ -147,7 +147,7 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const MTree<T> &mtree)
     {
         // Print the M-Tree recursively starting from the root node
-        os << "M-Tree:\n\n";
+        os << "M-Tree:\n";
         os << *mtree.root;
         return os;
     }

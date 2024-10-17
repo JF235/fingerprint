@@ -22,7 +22,7 @@ public:
     const T& getRepresentative() const { return representative; }
     double getCoveringRadius() const { return coveringRadius; }
     double getDistanceToParent() const { return distanceToParent; }
-    double setDistanceToParent(double distanceToParent) { this->distanceToParent = distanceToParent; }
+    void setDistanceToParent(double distanceToParent) { this->distanceToParent = distanceToParent; }
     void setCoveringRadius(double coveringRadius) { this->coveringRadius = coveringRadius; }
     std::shared_ptr<Node<T>> getSubtree() const { return subtree; }
     void setSubtree(std::shared_ptr<Node<T>> subtree) { this->subtree = subtree; }

@@ -152,7 +152,7 @@ public:
      * @param parentNode The parent node.
      * @param distance The distance function.
      */
-    virtual void updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> entries, NodePtr childNode, NodePtr parentNode, Metric distance) = 0;
+    virtual void updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> &entries, NodePtr childNode, NodePtr parentNode, Metric distance) = 0;
 
     /**
      * @brief Gets the string representation of the node.
@@ -171,12 +171,16 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const Node<T> &node) {
         for (size_t i = 0; i < node.entries.size(); i++) {
             if (node.isRoot && i == 0) {
-                os << "(Root)";
+                os << "(Root Node" << node.getNodeId() << ") ";
             }
             if (node.getIsLeaf()) {
-                os << "[" << node.entries[i]->getRepresentative() << "]";
+                // Print parent node
+                if (node.getParentNode() != nullptr) {
+                    os << node.getParentNode()->getNodeId();
+                }
+                os << "[" << node.entries[i]->getRepresentative() << "<" << node.entries[i] << ">]";
             } else {
-                os << "(" << node.entries[i]->getRepresentative() << ":" << node.entries[i]->getCoveringRadius() <<  ")";
+                os << "(routObj " << node.entries[i]->getRepresentative() << "<" << node.entries[i] << ">" << ": covRad " << node.entries[i]->getCoveringRadius() << ")";
             }
             if (node.entries[i]->getSubtree() == nullptr) {
                 os << "*";
@@ -199,7 +203,7 @@ public:
      *
      * @return A pair of routing objects.
      */
-    std::pair<TreeObjectPtr, TreeObjectPtr> promote(std::vector<TreeObjectPtr> entries) const {
+    std::pair<TreeObjectPtr, TreeObjectPtr> promote(std::vector<TreeObjectPtr> &entries) const {
         TreeObjectPtr p1 = std::make_shared<RoutingObject<T>>(entries[0]->getRepresentative(), entries[0]->getCoveringRadius(), entries[0]->getSubtree(), entries[0]->getDistanceToParent());
         TreeObjectPtr p2 = std::make_shared<RoutingObject<T>>(entries[1]->getRepresentative(), entries[1]->getCoveringRadius(), entries[1]->getSubtree(), entries[1]->getDistanceToParent());
         return std::make_pair(p1, p2);
@@ -213,7 +217,7 @@ public:
      * @param p2 The second routing object.
      * @return A pair of vectors of entries.
      */
-    std::pair<std::vector<TreeObjectPtr>, std::vector<TreeObjectPtr>> partition(std::vector<TreeObjectPtr> entries, TreeObjectPtr p1, TreeObjectPtr p2) const {
+    std::pair<std::vector<TreeObjectPtr>, std::vector<TreeObjectPtr>> partition(std::vector<TreeObjectPtr> &entries, TreeObjectPtr p1, TreeObjectPtr p2) const {
         size_t mid = entries.size() / 2;
         return std::make_pair(std::vector<TreeObjectPtr>(entries.begin(), entries.begin() + mid), std::vector<TreeObjectPtr>(entries.begin() + mid, entries.end()));
     }
@@ -252,16 +256,16 @@ public:
         storeEntries(entries2, newNode);
 
 
-        INSDEBUG_MSG("New Node" << newNode->getNodeId() << ", Promoted " << p1->getRepresentative() << " and " << p2->getRepresentative());
+        INSDEBUG_MSG("New Node" << newNode->getNodeId() << ", Promoted " << p1->getRepresentative() << "<" << p1 << ">" << " and " << p2->getRepresentative() << "<" << p2 << ">");
 
-        INSDEBUG_INLINE("Partition Node" << this->getNodeId() << " (size " << this->entries.size() << ") [");
+        INSDEBUG_INLINE("Partition Node" << this->getNodeId() << "[");
         for (const auto &entry : this->entries) {
-            INSDEBUG_INLINE(entry->getRepresentative() << " ");
+            INSDEBUG_INLINE(entry->getRepresentative() << "<" << entry << "> ");
         }
-        INSDEBUG_INLINE("] ");
-        INSDEBUG_INLINE("Partition Node" << newNode->getNodeId() << " (size " << newNode->entries.size() << ") [");
+        INSDEBUG_INLINE("]\n");
+        INSDEBUG_INLINE("Partition Node" << newNode->getNodeId() << "[");
         for (const auto &entry : newNode->entries) {
-            INSDEBUG_INLINE(entry->getRepresentative() << " ");
+            INSDEBUG_INLINE(entry->getRepresentative() << "<" << entry << "> ");
         }
         INSDEBUG_INLINE("]\n");
 
@@ -280,15 +284,19 @@ public:
             // Reset flag of the old root
             isRoot = false;
 
-            INSDEBUG_MSG("Node" << p1->getSubtree()->getNodeId() << " linked to routing obj " << p1->getRepresentative() << " (id: " << newRoot->getNodeId() << "), covering radius " << p1->getCoveringRadius());
+            INSDEBUG_MSG("Node" << p1->getSubtree()->getNodeId() << " linked to routing obj " << p1->getRepresentative() << "<" << p1 << "> (id: " << newRoot->getNodeId() << "), covering radius " << p1->getCoveringRadius());
             
-            INSDEBUG_MSG("Node" << p2->getSubtree()->getNodeId() << " linked to routing obj " << p2->getRepresentative() << " (id: " << newRoot->getNodeId() << "), covering radius " << p2->getCoveringRadius());
+            INSDEBUG_MSG("Node" << p2->getSubtree()->getNodeId() << " linked to routing obj " << p2->getRepresentative() << "<" << p2 << "> (id: " << newRoot->getNodeId() << "), covering radius " << p2->getCoveringRadius());
         } else {
             // The split occurred in an internal node or leaf node
 
             // In this case, start by replacing the parent routing object with the new routing object p1
+            bool found = false;
             for (auto &entry : parentNode->entries) {
+    
                 if (entry == parentRoutingObj) {
+                    found = true;
+                    std::cout << "!!!\n";
                     // Remove the parent routing object from the parent node
                     parentNode->entries.erase(std::remove(parentNode->entries.begin(), parentNode->entries.end(), parentRoutingObj), parentNode->entries.end());
 
@@ -296,9 +304,14 @@ public:
                     updateRoutingObject(p1, entries1, this->shared_from_this(), parentNode, distance);
 
                     // @TODO: Maybe this can be done faster too
-                    INSDEBUG_MSG("Node" << p1->getSubtree()->getNodeId() << " linked to routing obj " << p1->getRepresentative() << " (id: " << parentNode->getNodeId() << "), covering radius " << p1->getCoveringRadius());
+                    INSDEBUG_MSG("Node" << p1->getSubtree()->getNodeId() << " linked to routing obj " << p1->getRepresentative() << "<" << p1 << "> (id: " << parentNode->getNodeId() << "), covering radius " << p1->getCoveringRadius());
                     break;
                 }
+            } 
+
+            if (!found) {
+                std::cerr << "Parent routing object not found in parent node" << std::endl;
+                exit(1);
             }
 
             // Now decide what will happen with the new routing object p2
@@ -307,7 +320,7 @@ public:
             if (parentNode->entries.size() < maxCapacity) {
                 updateRoutingObject(p2, entries2, newNode, parentNode, distance);
 
-                INSDEBUG_MSG("Node" << p2->getSubtree()->getNodeId() << " linked to routing obj " << p2->getRepresentative() << " (id: " << parentNode->getNodeId() << "), covering radius " << p1->getCoveringRadius());
+                INSDEBUG_MSG("Node" << p2->getSubtree()->getNodeId() << " linked to routing obj " << p2->getRepresentative() << "<" << p2 << "> (id: " << parentNode->getNodeId() << "), covering radius " << p2->getCoveringRadius());
             } else {
                 // If the parent node is full, split it
                 // Using the routing object p2 as the new tree entry
@@ -426,7 +439,7 @@ public:
      * @param parentNode The parent node.
      * @param distance The distance function.
      */
-    void updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> entries, NodePtr childNode, NodePtr parentNode, Metric distance) override;
+    void updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> &entries, NodePtr childNode, NodePtr parentNode, Metric distance) override;
 
     void search(const T &query, double dmin, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const override;
 
@@ -501,7 +514,7 @@ public:
      * @param parentNode The parent node.
      * @param distance The distance function.
      */
-    void updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> entries, NodePtr childNode, NodePtr parentNode, Metric distance) override;
+    void updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> &entries, NodePtr childNode, NodePtr parentNode, Metric distance) override;
 
     void search(const T &query, double dmin, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const override;
 
