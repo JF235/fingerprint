@@ -51,7 +51,15 @@ public:
      * 
      * @param k The number of empty elements to initialize the list with. Default is 0.
      */
-    NNList(size_t k = 0);
+    NNList(size_t k);
+
+    /**
+     * @brief Constructs an NNList with the given number of empty elements, with the default distance set to the specified value.
+     * 
+     * @param k The number of empty elements to initialize the list with. Default is 0.
+     * @param dist The default distance to set for the elements. Default is infinity.
+     */
+    NNList(size_t k, double dist);
 
     /**
      * @brief Destructor for NNList.
@@ -140,6 +148,7 @@ public:
 
     std::vector<NNEntry<T>> entries;
 private:
+    double maxDistance;
     size_t currentSize;
     size_t maxSize;
 };

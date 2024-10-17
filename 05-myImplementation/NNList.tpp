@@ -6,6 +6,15 @@ NNList<T>::NNList(size_t k) : currentSize(0), maxSize(k) {
 }
 
 template <typename T>
+NNList<T>::NNList(size_t k, double dist) : currentSize(k), maxSize(k) {
+    // Fill k entries with default element and distance given by dist
+    entries.reserve(k);
+    for (size_t i = 0; i < k; ++i) {
+        entries.emplace_back(NNEntry<T>{T(), dist});
+    }
+}
+
+template <typename T>
 NNList<T>::~NNList() {}
 
 template <typename T>
