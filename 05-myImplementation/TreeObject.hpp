@@ -29,6 +29,16 @@ public:
     void setCurrentNode(std::shared_ptr<Node<T>> currentNode) { this->currentNode = currentNode; }
     std::shared_ptr<Node<T>> getCurrentNode() const { return currentNode; }
 
+    double calculateDistanceToQuery(const T &query, std::function<double(const T &, const T &)> distance) {
+        if (query == this->query) {
+            return distanceToQuery;
+        } else {
+            distanceToQuery = distance(query, representative);
+            this->query = query;
+            return distanceToQuery;
+        }
+    }
+
 
 protected:
     T representative;
@@ -36,6 +46,8 @@ protected:
     std::shared_ptr<Node<T>> subtree;
     std::shared_ptr<Node<T>> currentNode;
     double distanceToParent;
+    double distanceToQuery;
+    T query;
 };
 
 /**

@@ -168,7 +168,8 @@ void InternalNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std
         else
         {
             dEntryParent = entry->getDistanceToParent();
-            dQueryParent = distance(query, this->parentRoutingObj->getRepresentative()); // @TODO TROCAR ISSO POR UMA METODO DE TREE OBJECT QUE RECEBE A QUERY E VERIFICA SE A QUERY CACHEADA É IGUAL, CASO POSITIVO RETORNA O VALOR CACHEADO
+            dQueryParent = this->parentRoutingObj->calculateDistanceToQuery(query, distance);
+            //dQueryParent = distance(query, this->parentRoutingObj->getRepresentative()); // @TODO TROCAR ISSO POR UMA METODO DE TREE OBJECT QUE RECEBE A QUERY E VERIFICA SE A QUERY CACHEADA É IGUAL, CASO POSITIVO RETORNA O VALOR CACHEADO
         }
 
         // Check condition for pruning without calculating the distance

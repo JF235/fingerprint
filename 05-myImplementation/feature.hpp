@@ -105,6 +105,11 @@ public:
         return id;
     }
 
+
+    bool operator==(const feature& other) const {
+        return id == other.id;
+    }
+
 private:
     uint32_t id; ///< Unique identifier
     std::vector<float> values; ///< Vector of values

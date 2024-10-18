@@ -41,7 +41,7 @@ public:
      *                  4. d(x, z) <= d(x, y) + d(y, z) for all x, y, z
      */
     MTree(size_t maxNodeCapacity, Metric distance)
-        : maxNodeCapacity(maxNodeCapacity), distance(distance), nextNodeId(0), treeSize(0), height(0)
+        : maxNodeCapacity(maxNodeCapacity), distance(distance), nextNodeId(0), treeSize(0), height(1)
     {
         root = std::make_shared<LeafNode<T>>(nextNodeId++, maxNodeCapacity, true, nullptr, nullptr);
     }
@@ -85,7 +85,9 @@ public:
      * @param k The number of nearest neighbors to search for.
      * @return A list of the k nearest neighbors.
      */
-    NNList<T> search(const T &query, size_t k) const {
+    NNList<T> search(const T &query, size_t k) {
+        nodesAccessed = 0;
+
         /* Create a list to store the k nearest neighbors.
         The list is sorted in ascending order of distance to the query. */
         NNList<T> nnList(k, std::numeric_limits<double>::infinity());
@@ -117,7 +119,9 @@ public:
 
             KNNDEBUG_MSG("Searching in Node" << node->getNodeId() << " (dmin = " << dmin << ", dk = " << nnList.getMaxDistance() << ")");
 
+            nodesAccessed++;
             node->search(query, dmin, nnList, candidates, distance);
+
 
             KNNDEBUG_MSG("KNN: " << nnList);
             #ifdef KNNDEBUG
@@ -135,6 +139,26 @@ public:
     size_t size() const
     {
         return treeSize;
+    }
+
+    /**
+     * @brief Gets the height of the M-Tree.
+     *
+     * @return The height of the M-Tree.
+     */
+    size_t getHeight() const
+    {
+        return height;
+    }
+
+    /**
+     * @brief Gets the number of nodes accessed during the last search.
+     *
+     * @return The number of nodes accessed during the last search.
+     */
+    size_t getNodesAccessed() const
+    {
+        return nodesAccessed;
     }
 
     /**
@@ -170,6 +194,7 @@ private:
     size_t nextNodeId;             ///< Counter to generate unique IDs for nodes.
     size_t treeSize;                   ///< Number of elements in the M-Tree.
     size_t height;                 ///< Height of the M-Tree.
+    size_t nodesAccessed;      ///< Number of nodes accessed during search.
 };
 
 #endif // MTREE_HPP

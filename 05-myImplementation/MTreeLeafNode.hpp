@@ -110,15 +110,19 @@ void LeafNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr
 template <typename T>
 void LeafNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const
 {
+    double dk;
+    double dEntryParent;
+    double dQueryParent;
+    double dEntryQuery;
     // For all entries in node
     for (const auto &entry : this->entries)
     {
         // Let dk be the maxDistance in NNList
-        double dk = nnList.getMaxDistance();
+        dk = nnList.getMaxDistance();
 
         // Check if is root
-        double dEntryParent;
-        double dQueryParent;
+        dEntryParent;
+        dQueryParent;
         if (this->isRoot)
         {
             // If it is root, set d(entry, parent) = 0 to avoid pruning
@@ -129,7 +133,8 @@ void LeafNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::ve
         {
             // If it is check inequality |d(entry, parent) - d(query, parent)| <= dk
             dEntryParent = entry->getDistanceToParent();
-            dQueryParent = distance(query, this->parentRoutingObj->getRepresentative());
+            dQueryParent = this->parentRoutingObj->calculateDistanceToQuery(query, distance);
+            //dQueryParent = distance(query, this->parentRoutingObj->getRepresentative());
         }
 
         // @TODO: If I store the distance once is computed, I can avoid this computation
@@ -140,7 +145,7 @@ void LeafNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::ve
             // This condition comes from the triangle inequality
 
             // If true, compute d(entry, query)
-            double dEntryQuery = distance(entry->getRepresentative(), query);
+            dEntryQuery = distance(entry->getRepresentative(), query);
 
             // If this distance is less than or equal to dk
             if (dEntryQuery <= dk)
