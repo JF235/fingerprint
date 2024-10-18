@@ -82,6 +82,13 @@ public:
     void insert(const T& element, double distance);
 
     /**
+     * @brief This is a virtual insertion, only changes the maximum distance.
+     * 
+     * @param distance The distance to insert.
+     */
+    void insert(double distance);
+
+    /**
      * @brief Forces the insertion of an entry into the list, even if it is full.
      * 
      * @param entry The entry to insert.
@@ -93,6 +100,12 @@ public:
      * @return The maximum distance in the nearest neighbors list.
      */
     float getMaxDistance() const;
+
+    /**
+     * @brief Sets the maximum distance in the nearest neighbors list.
+     * @param distance The new maximum distance.
+     */
+    void setMaxDistance(double distance);
 
     /**
      * @brief Returns the number of elements in the nearest neighbors list.
@@ -122,9 +135,10 @@ public:
         os << "[";
         for (size_t i = 0; i < list.entries.size(); ++i) {
             os << list.entries[i];
-            if (i < list.entries.size() - 1) {
-                os << ", ";
+            if (i == list.entries.size() - 1 || list.entries[i + 1].distance == std::numeric_limits<float>::infinity()) {
+                break;
             }
+            os << ", ";
         }
         os << "]";
         return os;

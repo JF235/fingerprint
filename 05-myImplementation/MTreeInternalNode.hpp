@@ -5,10 +5,10 @@
 
 template <typename T>
 InternalNode<T>::InternalNode(size_t nodeId, size_t maxCapacity, bool isRoot, NodePtr parentNode, TreeObjectPtr parentRoutingObj)
-    : Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj) 
-    {
-        this->isLeaf = false;
-    }
+    : Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj)
+{
+    this->isLeaf = false;
+}
 
 template <typename T>
 void InternalNode<T>::insert(const T &element, Metric distance)
@@ -62,6 +62,8 @@ void InternalNode<T>::insert(const T &element, Metric distance)
         bestRoutingObjectExpand->setCoveringRadius(bestRoutingObjectExpand->getCoveringRadius() + minRadiusIncrement);
 
         bestRoutingObject = bestRoutingObjectExpand;
+
+        // @TODO: Recurse above to update covering radius (Na verdade, acho que isso não é um problema pois o parente também atualizou)
     }
 
     // Continue inserting in the next level
@@ -71,23 +73,25 @@ void InternalNode<T>::insert(const T &element, Metric distance)
 template <typename T>
 typename InternalNode<T>::NodePtr InternalNode<T>::createNewNode(size_t nodeId) const
 {
-    return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, false, this->parentNode, this->parentRoutingObj);
+    return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, false, nullptr, nullptr);
 }
 
 template <typename T>
 typename InternalNode<T>::NodePtr InternalNode<T>::createNewRootNode(size_t nodeId) const
 {
-    return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, false, this->parentNode, this->parentRoutingObj);
+    return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, true, nullptr, nullptr);
 }
 
 template <typename T>
 void InternalNode<T>::getRepr(std::ostream &os) const
-{   
-    os << this->getNodeId() << " ";
+{
     os << this->getParentNode()->getNodeId();
+    os << "<" << this->getParentRoutingObj() << "> -> ";
+    os << this->getNodeId() << " ";
     for (size_t i = 0; i < this->entries.size(); i++)
     {
-        os << "(" << this->entries[i]->getRepresentative() << "<" << this->entries[i] << ">:" << this->entries[i]->getCoveringRadius() << ")";
+        
+        os << "(" << this->entries[i]->getRepresentative() << "<" << this->entries[i] << ">:" << this->entries[i]->getCoveringRadius() << ":" << this->entries[i]->getDistanceToParent() << ")";
         // Check if null
         if (this->entries[i]->getSubtree() == nullptr)
         {
@@ -128,9 +132,6 @@ void InternalNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjec
             maxDistance = dist + entry->getCoveringRadius();
         }
         entry->setDistanceToParent(dist);
-
-        // Add the entry to the childNode
-        //childNode->getEntries().push_back(entry);
     }
     p->setCoveringRadius(maxDistance);
 
@@ -142,7 +143,7 @@ void InternalNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjec
 
     // Now the nodes must be update also
     parentNode->getEntries().push_back(p);
-    // maybe check if its full
+    //  maybe check if its full
 
     childNode->setParentNode(parentNode);
     childNode->setParentRoutingObj(p);
@@ -158,13 +159,16 @@ void InternalNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std
         // Check if is root
         double dEntryParent;
         double dQueryParent;
-        if (this->isRoot){
+        if (this->isRoot)
+        {
             // If it is root, set d(entry, parent) = 0 to avoid pruning
             dEntryParent = 0.0;
             dQueryParent = 0.0;
-        } else {
+        }
+        else
+        {
             dEntryParent = entry->getDistanceToParent();
-            dQueryParent = distance(query, this->parentRoutingObj->getRepresentative());
+            dQueryParent = distance(query, this->parentRoutingObj->getRepresentative()); // @TODO TROCAR ISSO POR UMA METODO DE TREE OBJECT QUE RECEBE A QUERY E VERIFICA SE A QUERY CACHEADA É IGUAL, CASO POSITIVO RETORNA O VALOR CACHEADO
         }
 
         // Check condition for pruning without calculating the distance
@@ -187,13 +191,33 @@ void InternalNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std
                 if (dmaxEntry < dk)
                 {
                     // Update the NN list with the new upper bound (dummyNode)
-                    nnList.insert(entry->getRepresentative(), dmaxEntry);
+                    nnList.insert(dmaxEntry);
                     // Compute new dk
                     dk = nnList.getMaxDistance();
-                    // Prune the candidates for which the lower bound is greater than the new dk
-                    candidates.erase(std::remove_if(candidates.begin(), candidates.end(), [dk](const std::pair<NodePtr, double> &candidate) {
-                        return candidate.second > dk;
-                    }), candidates.end());
+// Prune the candidates for which the lower bound is greater than the new dk
+
+// For debugging purposes print erased candidates
+#ifdef KNNDEBUG
+                    bool print = false;
+                    for (auto it = candidates.begin(); it != candidates.end(); ++it)
+                    {
+                        if (it->second > dk)
+                        {
+                            if (!print)
+                            {
+                                std::cout << "Erased candidates: ";
+                                print = true;
+                            }
+                            std::cout << it->first->getNodeId() << " ";
+                        }
+                    }
+                    if (print)
+                        std::cout << std::endl;
+#endif
+
+                    candidates.erase(std::remove_if(candidates.begin(), candidates.end(), [dk](const std::pair<NodePtr, double> &candidate)
+                                                    { return candidate.second > dk; }),
+                                     candidates.end());
                 }
             }
         }

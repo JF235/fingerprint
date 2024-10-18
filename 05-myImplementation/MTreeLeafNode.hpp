@@ -5,10 +5,10 @@
 
 template <typename T>
 LeafNode<T>::LeafNode(size_t nodeId, size_t maxCapacity, bool isRoot, NodePtr parentNode, TreeObjectPtr parentRoutingObj)
-    : Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj) 
-    {
-        this->isLeaf = true;
-    }
+    : Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj)
+{
+    this->isLeaf = true;
+}
 
 template <typename T>
 void LeafNode<T>::insert(const T &element, Metric distance)
@@ -22,7 +22,7 @@ void LeafNode<T>::insert(const T &element, Metric distance)
             this->entries.emplace_back(std::make_shared<LeafObject<T>>(element, std::numeric_limits<float>::infinity()));
 
             // @TODO: (Remove) Get pointer value
-            INSDEBUG_MSG("Inserted [element: " << element << "<" << this->entries.back() << ">" << ", distance: inf] " <<  "into root node [id: " << this->getNodeId() << ", size: " << this->entries.size() << "]");
+            INSDEBUG_MSG("Inserted [element: " << element << "<" << this->entries.back() << ">" << ", distance: inf] " << "into root node [id: " << this->getNodeId() << ", size: " << this->entries.size() << "]");
             return;
         }
         else
@@ -33,11 +33,10 @@ void LeafNode<T>::insert(const T &element, Metric distance)
             this->entries.emplace_back(std::make_shared<LeafObject<T>>(element, dist)); // distanceToParent is inf for new elements
             INSDEBUG_MSG("Inserted [element: " << element << "<" << this->entries.back() << ">" << ", dist2parent: " << dist << "] into node [id: " << this->getNodeId() << ", size: " << this->entries.size() << ", parent: " << this->parentRoutingObj->getRepresentative() << "]");
         }
-
     }
     else
     {
-        //INSDEBUG_MSG("Leaf node " << this->getNodeId() << " is full. Cannot insert element " << element);
+        // INSDEBUG_MSG("Leaf node " << this->getNodeId() << " is full. Cannot insert element " << element);
         INSDEBUG_MSG("Node " << this->getNodeId() << " Full and Splitting");
         this->split(std::make_shared<LeafObject<T>>(element, std::numeric_limits<float>::infinity()), distance);
     }
@@ -47,24 +46,25 @@ void LeafNode<T>::insert(const T &element, Metric distance)
 template <typename T>
 typename LeafNode<T>::NodePtr LeafNode<T>::createNewNode(size_t nodeId) const
 {
-    return std::make_shared<LeafNode<T>>(nodeId, this->maxCapacity, false, this->parentNode, this->parentRoutingObj);
+    return std::make_shared<LeafNode<T>>(nodeId, this->maxCapacity, false, nullptr, nullptr);
 }
 
 // Create New Root Node
 template <typename T>
 typename LeafNode<T>::NodePtr LeafNode<T>::createNewRootNode(size_t nodeId) const
 {
-    return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, false, this->parentNode, this->parentRoutingObj);
+    return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, true, nullptr, nullptr);
 }
 
 template <typename T>
 void LeafNode<T>::getRepr(std::ostream &os) const
 {
-    os << this->getNodeId() << " ";
     os << this->getParentNode()->getNodeId();
+    os << "<" << this->getParentRoutingObj() << "> -> ";
+    os << this->getNodeId() << " ";
     for (size_t i = 0; i < this->entries.size(); i++)
     {
-        os << "[" << this->entries[i]->getRepresentative() << "<" << this->entries[i] << ">]";
+        os << "[" << this->entries[i]->getRepresentative() << "<" << this->entries[i] << ">:" << this->entries[i]->getDistanceToParent() << "]";
         // Check if null
         if (this->entries[i]->getSubtree() == nullptr)
         {
@@ -119,19 +119,21 @@ void LeafNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::ve
         // Check if is root
         double dEntryParent;
         double dQueryParent;
-        if (this->isRoot){
+        if (this->isRoot)
+        {
             // If it is root, set d(entry, parent) = 0 to avoid pruning
             dEntryParent = 0.0;
             dQueryParent = 0.0;
-        } else {
+        }
+        else
+        {
             // If it is check inequality |d(entry, parent) - d(query, parent)| <= dk
             dEntryParent = entry->getDistanceToParent();
             dQueryParent = distance(query, this->parentRoutingObj->getRepresentative());
         }
 
         // @TODO: If I store the distance once is computed, I can avoid this computation
-        
-        
+
         // It can prune without computing the distance
         if (std::fabs(dEntryParent - dQueryParent) <= dk)
         {
@@ -149,15 +151,31 @@ void LeafNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::ve
                 // Get new dk
                 dk = nnList.getMaxDistance();
 
+#ifdef KNNDEBUG
+                bool print = false;
+                for (auto it = candidates.begin(); it != candidates.end(); ++it)
+                {
+                    if (it->second > dk)
+                    {
+                        if (!print)
+                        {
+                            std::cout << "Erased candidates: ";
+                            print = true;
+                        }
+                        std::cout << it->first->getNodeId() << " ";
+                    }
+                }
+                if (print)
+                    std::cout << std::endl;
+#endif
+
                 // Prune all candidates which lower bound is greater than dk
-                candidates.erase(std::remove_if(candidates.begin(), candidates.end(), [dk](const std::pair<NodePtr, double> &candidate) {
-                    return candidate.second > dk;
-                }), candidates.end());
+                candidates.erase(std::remove_if(candidates.begin(), candidates.end(), [dk](const std::pair<NodePtr, double> &candidate)
+                                                { return candidate.second > dk; }),
+                                 candidates.end());
             }
         }
     }
-
-
 }
 
 #endif // MTREELEAFNODE_HPP

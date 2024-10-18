@@ -26,12 +26,15 @@ public:
     void setCoveringRadius(double coveringRadius) { this->coveringRadius = coveringRadius; }
     std::shared_ptr<Node<T>> getSubtree() const { return subtree; }
     void setSubtree(std::shared_ptr<Node<T>> subtree) { this->subtree = subtree; }
+    void setCurrentNode(std::shared_ptr<Node<T>> currentNode) { this->currentNode = currentNode; }
+    std::shared_ptr<Node<T>> getCurrentNode() const { return currentNode; }
 
 
 protected:
     T representative;
     double coveringRadius;
     std::shared_ptr<Node<T>> subtree;
+    std::shared_ptr<Node<T>> currentNode;
     double distanceToParent;
 };
 

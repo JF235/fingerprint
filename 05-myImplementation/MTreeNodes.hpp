@@ -204,8 +204,18 @@ public:
      * @return A pair of routing objects.
      */
     std::pair<TreeObjectPtr, TreeObjectPtr> promote(std::vector<TreeObjectPtr> &entries) const {
-        TreeObjectPtr p1 = std::make_shared<RoutingObject<T>>(entries[0]->getRepresentative(), entries[0]->getCoveringRadius(), entries[0]->getSubtree(), entries[0]->getDistanceToParent());
-        TreeObjectPtr p2 = std::make_shared<RoutingObject<T>>(entries[1]->getRepresentative(), entries[1]->getCoveringRadius(), entries[1]->getSubtree(), entries[1]->getDistanceToParent());
+        // TreeObjectPtr p1 = std::make_shared<RoutingObject<T>>(entries[0]->getRepresentative(), entries[0]->getCoveringRadius(), entries[0]->getSubtree(), entries[0]->getDistanceToParent());
+        // TreeObjectPtr p2 = std::make_shared<RoutingObject<T>>(entries[1]->getRepresentative(), entries[1]->getCoveringRadius(), entries[1]->getSubtree(), entries[1]->getDistanceToParent());
+        // return std::make_pair(p1, p2);
+
+        /* Select two random */
+        size_t p1Index = rand() % entries.size();
+        size_t p2Index = rand() % entries.size();
+        while (p1Index == p2Index) {
+            p2Index = rand() % entries.size();
+        }
+        TreeObjectPtr p1 = std::make_shared<RoutingObject<T>>(entries[p1Index]->getRepresentative(), entries[p1Index]->getCoveringRadius(), entries[p1Index]->getSubtree(), entries[p1Index]->getDistanceToParent());
+        TreeObjectPtr p2 = std::make_shared<RoutingObject<T>>(entries[p2Index]->getRepresentative(), entries[p2Index]->getCoveringRadius(), entries[p2Index]->getSubtree(), entries[p2Index]->getDistanceToParent());
         return std::make_pair(p1, p2);
     }
 
@@ -217,9 +227,61 @@ public:
      * @param p2 The second routing object.
      * @return A pair of vectors of entries.
      */
-    std::pair<std::vector<TreeObjectPtr>, std::vector<TreeObjectPtr>> partition(std::vector<TreeObjectPtr> &entries, TreeObjectPtr p1, TreeObjectPtr p2) const {
-        size_t mid = entries.size() / 2;
-        return std::make_pair(std::vector<TreeObjectPtr>(entries.begin(), entries.begin() + mid), std::vector<TreeObjectPtr>(entries.begin() + mid, entries.end()));
+    std::pair<std::vector<TreeObjectPtr>, std::vector<TreeObjectPtr>> partition(std::vector<TreeObjectPtr> &entries, TreeObjectPtr p1, TreeObjectPtr p2, Metric distance) const {
+        // // Generalized hyperplane partitioning
+        // // Assign each entry to the closest of the two routing objects
+        // std::vector<TreeObjectPtr> entries1;
+        // std::vector<TreeObjectPtr> entries2;
+        // for (const auto &entry : entries) {
+        //     double dist1 = distance(entry->getRepresentative(), p1->getRepresentative());
+        //     double dist2 = distance(entry->getRepresentative(), p2->getRepresentative());
+        //     if (dist1 < dist2) {
+        //         entries1.push_back(entry);
+        //     } else {
+        //         entries2.push_back(entry);
+        //     }
+        // }
+
+        // Balanced
+
+        // While entries is not empty
+        // For all entries compute distance between entry and p1 and p2
+        // Assign to entries1 the nearest entry to p1
+        // Assign to entries2 the nearest entry to p2
+
+        // std::vector<TreeObjectPtr> entries1;
+        // std::vector<TreeObjectPtr> entries2;
+        // while (!entries.empty()) {
+        //     double maxDist1 = 0.0;
+        //     double maxDist2 = 0.0;
+        //     size_t maxIndex1 = 0;
+        //     size_t maxIndex2 = 0;
+        //     for (size_t i = 0; i < entries.size(); i++) {
+        //         double dist1 = distance(entries[i]->getRepresentative(), p1->getRepresentative());
+        //         double dist2 = distance(entries[i]->getRepresentative(), p2->getRepresentative());
+        //         if (dist1 > maxDist1) {
+        //             maxDist1 = dist1;
+        //             maxIndex1 = i;
+        //         }
+        //         if (dist2 > maxDist2) {
+        //             maxDist2 = dist2;
+        //             maxIndex2 = i;
+        //         }
+        //     }
+        //     if (maxDist1 < maxDist2) {
+        //         entries1.push_back(entries[maxIndex1]);
+        //         entries.erase(entries.begin() + maxIndex1);
+        //     } else {
+        //         entries2.push_back(entries[maxIndex2]);
+        //         entries.erase(entries.begin() + maxIndex2);
+        //     }
+        // }
+
+        // Divide in half
+        std::vector<TreeObjectPtr> entries1(entries.begin(), entries.begin() + entries.size() / 2);
+        std::vector<TreeObjectPtr> entries2(entries.begin() + entries.size() / 2, entries.end());
+
+        return std::make_pair(entries1, entries2);
     }
 
     /**
@@ -246,7 +308,7 @@ public:
 
         // PARTITION
         // Divides entries of the overflown node into two disjoint sets
-        std::pair<std::vector<TreeObjectPtr>, std::vector<TreeObjectPtr>> partEntries = partition(allEntries, p1, p2);
+        std::pair<std::vector<TreeObjectPtr>, std::vector<TreeObjectPtr>> partEntries = partition(allEntries, p1, p2, distance);
         std::vector<TreeObjectPtr> entries1 = partEntries.first;
         std::vector<TreeObjectPtr> entries2 = partEntries.second;
 
@@ -274,11 +336,17 @@ public:
             // In this case, create a new root node and the height of the tree increases by one
             maxNodeId = maxNodeId + 1;
             auto newRoot = createNewRootNode(maxNodeId);
-            newRoot->setIsRoot(true);
             INSDEBUG_MSG("Splitting the root... NewRoot = " << newRoot->getNodeId());
 
-            // Update coveringRadius, subtree and distanceToParent for each new routing object
+            // Update connections. 
+            // 1. routing object p1 is added to newRoot
+            // 2. p1 points to subtree this
+            // 3. this points to p1 and newRoot
             updateRoutingObject(p1, entries1, this->shared_from_this(), newRoot, distance);
+            
+            // 1. routing object p2 is added to newRoot
+            // 2. p2 points to subtree newNode
+            // 3. newNode points to p2 and newRoot
             updateRoutingObject(p2, entries2, newNode, newRoot, distance);
 
             // Reset flag of the old root
@@ -295,16 +363,24 @@ public:
             for (auto &entry : parentNode->entries) {
     
                 if (entry == parentRoutingObj) {
+                    INSDEBUG_MSG("Substituting routing object " << parentRoutingObj->getRepresentative() << "<" << parentRoutingObj << "> in node " << parentNode->getNodeId() << " with " << p1->getRepresentative() << "<" << p1 << ">");
+
                     found = true;
-                    std::cout << "!!!\n";
                     // Remove the parent routing object from the parent node
                     parentNode->entries.erase(std::remove(parentNode->entries.begin(), parentNode->entries.end(), parentRoutingObj), parentNode->entries.end());
+
+                    // Update distance to parent for new routing object p1
+                    // Get parentRoutingObj from the parent node
+                    if (parentNode->getParentRoutingObj() != nullptr)
+                        p1->setDistanceToParent(distance(p1->getRepresentative(), parentNode->getParentRoutingObj()->getRepresentative()));
+                    // @ TODO: Será que preciso fazer algo parecido em outros lugares?
+                    // Ao inserir o novo routing object, talvez eu tenha que atualizar.
 
                     // Update the parent routing object with the new routing object p1
                     updateRoutingObject(p1, entries1, this->shared_from_this(), parentNode, distance);
 
                     // @TODO: Maybe this can be done faster too
-                    INSDEBUG_MSG("Node" << p1->getSubtree()->getNodeId() << " linked to routing obj " << p1->getRepresentative() << "<" << p1 << "> (id: " << parentNode->getNodeId() << "), covering radius " << p1->getCoveringRadius());
+                    INSDEBUG_MSG("Node" << p1->getSubtree()->getNodeId() << " linked to routing obj " << p1->getRepresentative() << "<" << p1 << "> (id: " << parentNode->getNodeId() << "), covering radius " << p1->getCoveringRadius() << ", parentDistance: " << p1->getDistanceToParent());
                     break;
                 }
             } 
@@ -321,6 +397,9 @@ public:
                 updateRoutingObject(p2, entries2, newNode, parentNode, distance);
 
                 INSDEBUG_MSG("Node" << p2->getSubtree()->getNodeId() << " linked to routing obj " << p2->getRepresentative() << "<" << p2 << "> (id: " << parentNode->getNodeId() << "), covering radius " << p2->getCoveringRadius());
+                
+                if (parentNode->getParentRoutingObj() != nullptr)
+                    p2->setDistanceToParent(distance(p2->getRepresentative(), parentNode->getParentRoutingObj()->getRepresentative()));
             } else {
                 // If the parent node is full, split it
                 // Using the routing object p2 as the new tree entry
@@ -330,9 +409,16 @@ public:
                 double maxDistance = 0.0;
                 for (const auto &entry : entries2) {
                     double dist = distance(p2->getRepresentative(), entry->getRepresentative());
-                    if (dist > maxDistance) {
-                        maxDistance = dist;
+                    
+                    // Isso me custou um bom tempo :(
+                    if (newNode->getIsLeaf()) {
+                        if (dist > maxDistance)
+                            maxDistance = dist;
+                    } else {
+                        if (dist + entry->getCoveringRadius() > maxDistance)
+                            maxDistance = dist + entry->getCoveringRadius();
                     }
+                    
                     // Update parentDistance for each entry
                     entry->setDistanceToParent(dist);
                 }
@@ -340,8 +426,22 @@ public:
                 p2->setSubtree(newNode);
                 newNode->setParentRoutingObj(p2);
                 
+                INSDEBUG_MSG("Node" << p2->getSubtree()->getNodeId() << " linked to routing obj " << p2->getRepresentative() << "<" << p2 << "> (id: tbd), covering radius " << p2->getCoveringRadius());
+
                 // Split the parent node to insert the new routing object p2
                 parentNode->split(p2, distance);
+
+                // Finally, for all entries in the currentNode of p2, update the parent node
+                for (const auto &entry : p2->getCurrentNode()->getEntries()) {
+                    entry->getSubtree()->setParentNode(p2->getCurrentNode());
+                    INSDEBUG_MSG("Node " << entry->getSubtree()->getNodeId() << " finally linked to " << p2->getCurrentNode()->getNodeId());
+                }
+
+                // @ TODO: Maybe remove it
+                if (p2->getCurrentNode()->getParentRoutingObj() != nullptr)
+                    p2->setDistanceToParent(distance(p2->getRepresentative(), p2->getCurrentNode()->getParentRoutingObj()->getRepresentative()));
+
+                
             }
         }
     }
@@ -364,6 +464,7 @@ protected:
     void storeEntries(const std::vector<TreeObjectPtr> &newEntries, NodePtr node) {
         for (const auto &entry : newEntries) {
             node->entries.push_back(entry);
+            entry->setCurrentNode(node);
         }
     }
 
@@ -376,6 +477,7 @@ protected:
     void storeEntries(const std::vector<TreeObjectPtr> &newEntries, Node<T>* node) {
         for (const auto &entry : newEntries) {
             node->entries.push_back(entry);
+            entry->setCurrentNode(node->shared_from_this());
         }
     }
 };

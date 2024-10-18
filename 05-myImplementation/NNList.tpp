@@ -21,6 +21,10 @@ template <typename T>
 void NNList<T>::forceInsert(const NNEntry<T>& entry) {
     auto it = std::lower_bound(entries.begin(), entries.end(), entry);
     entries.insert(it, entry);
+    // Check if needs to update maxDistance
+    if (entries.back().distance < maxDistance) {
+        maxDistance = entries.back().distance;
+    }
     ++currentSize;
 }
 
@@ -36,12 +40,22 @@ void NNList<T>::insert(const T& value, double distance) {
 }
 
 template <typename T>
+void NNList<T>::insert(double distance) {
+    setMaxDistance(distance);
+}
+
+template <typename T>
 float NNList<T>::getMaxDistance() const {
     if (entries.empty()) {
         // Return infinity if the list is empty
         return std::numeric_limits<float>::infinity();
     }
     return entries.back().distance;
+}
+
+template <typename T>
+void NNList<T>::setMaxDistance(double distance) {
+    maxDistance = distance;
 }
 
 template <typename T>
