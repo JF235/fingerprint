@@ -13,6 +13,9 @@
 #include "indexing/NNList.hpp"
 #include "indexing/DistanceFunction.hpp"
 
+// Global variable for counting the number of nodes
+extern size_t totalNodes;
+
 /**
  * @brief Class representing an M-Tree.
  *
@@ -42,6 +45,7 @@ public:
     MTree(size_t maxNodeCapacity, DistanceFunction<T> &distance)
         : maxNodeCapacity(maxNodeCapacity), distance(distance), treeSize(0), height(1)
     {
+        totalNodes = 0;
         root = std::make_shared<LeafNode<T>>(maxNodeCapacity, true, nullptr, nullptr);
     }
 
@@ -116,13 +120,14 @@ public:
             
             // Then remove the pair from the candidates list
             NodePtr node = minCandidate->first;
-            double dmin = minCandidate->second;
+            // @ TODO: Why discard the lower bound? Can I be reused?
+            //double dmin = minCandidate->second;
             candidates.erase(minCandidate);
 
             KNNDEBUG_MSG("Searching in Node" << node->getNodeId() << " (dmin = " << dmin << ", dk = " << nnList.getMaxDistance() << ")");
 
             nodesAccessed++;
-            node->search(query, dmin, nnList, candidates, distance);
+            node->search(query, nnList, candidates, distance);
 
             KNNDEBUG_MSG("KNN: " << nnList);
             #ifdef KNNDEBUG
@@ -164,6 +169,16 @@ public:
     }
 
     /**
+     * @brief Gets the total number of nodes in the M-Tree.
+     *
+     * @return The total number of nodes in the M-Tree.
+     */
+    size_t getTotalNodes() const
+    {
+        return totalNodes;
+    }
+
+    /**
      * @brief Overloads the stream insertion operator to print the M-Tree.
      *
      * @param os The output stream.
@@ -190,12 +205,12 @@ private:
         std::cout << std::endl;
     }
 
-    size_t treeSize;                ///< Number of elements in the M-Tree.
-    size_t height;                  ///< Height of the M-Tree.
     
-    NodePtr root;                   ///< Pointer to the root node of the M-Tree.
     size_t maxNodeCapacity;         ///< The maximum number of elements a node can hold.
     DistanceFunction<T> &distance;   ///< Function that computes the distance between two elements of type T.
+    size_t treeSize;                ///< Number of elements in the M-Tree.
+    size_t height;                  ///< Height of the M-Tree.
+    NodePtr root;                   ///< Pointer to the root node of the M-Tree.
     
     // Parameters for benchmarking
     size_t nodesAccessed;           ///< Number of nodes accessed during search.

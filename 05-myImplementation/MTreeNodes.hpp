@@ -12,6 +12,8 @@
 #include "includes/dbgmsg.hpp"
 #include "indexing/NNList.hpp"
 
+size_t totalNodes = 0;
+
 /**
  * @brief Base class for a node in the M-Tree.
  *
@@ -38,6 +40,7 @@ public:
     Node(size_t maxCapacity, bool isRoot = false, NodePtr parentNode = nullptr, TreeObjectPtr parentRoutingObj = nullptr)
         : maxCapacity(maxCapacity), isRoot(isRoot), parentNode(parentNode), parentRoutingObj(parentRoutingObj) {
         nodeId = nextNodeId++;
+        totalNodes++;
         }
     virtual ~Node() = default;
 
@@ -143,7 +146,7 @@ public:
      * @param candidates The candidate nodes to search in.
      * @param distance The distance function.
      */
-    virtual void search(const T &query, double dmin, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const = 0;
+    virtual void search(const T &query, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const = 0;
 
     /**
      * @brief Updates the routing object.
@@ -216,8 +219,8 @@ public:
         while (p1Index == p2Index) {
             p2Index = rand() % entries.size();
         }
-        TreeObjectPtr p1 = std::make_shared<RoutingObject<T>>(entries[p1Index]->getRepresentative(), entries[p1Index]->getCoveringRadius(), entries[p1Index]->getSubtree(), entries[p1Index]->getDistanceToParent());
-        TreeObjectPtr p2 = std::make_shared<RoutingObject<T>>(entries[p2Index]->getRepresentative(), entries[p2Index]->getCoveringRadius(), entries[p2Index]->getSubtree(), entries[p2Index]->getDistanceToParent());
+        TreeObjectPtr p1 = std::make_shared<RoutingObject<T>>(entries[p1Index]->getRepresentative(), entries[p1Index]->getCoveringRadius(), entries[p1Index]->getDistanceToParent());
+        TreeObjectPtr p2 = std::make_shared<RoutingObject<T>>(entries[p2Index]->getRepresentative(), entries[p2Index]->getCoveringRadius(), entries[p2Index]->getDistanceToParent());
         return std::make_pair(p1, p2);
     }
 
@@ -548,7 +551,7 @@ public:
      */
     void updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> &entries, NodePtr childNode, NodePtr parentNode, Metric distance) override;
 
-    void search(const T &query, double dmin, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const override;
+    void search(const T &query, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const override;
 
     /**
      * @brief Gets the string representation of the leaf node.
@@ -623,7 +626,7 @@ public:
      */
     void updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr> &entries, NodePtr childNode, NodePtr parentNode, Metric distance) override;
 
-    void search(const T &query, double dmin, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const override;
+    void search(const T &query, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const override;
 
     /**
      * @brief Gets the string representation of the internal node.

@@ -42,7 +42,7 @@ void LeafNode<T>::insert(const T &element, Metric distance)
         INSDEBUG_MSG("Node " << this->getNodeId() << " Full and Splitting");
         
         // If the node is full, split it
-        this->split(std::make_shared<LeafObject<T>>(element, std::numeric_limits<float>::infinity()), distance);
+        this->split(std::make_shared<LeafObject<T>>(element, 0.0), distance);
     }
 }
 
@@ -112,8 +112,10 @@ void LeafNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjectPtr
 }
 
 template <typename T>
-void LeafNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const
+void LeafNode<T>::search(const T &query, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const
 {
+    // @ TODO: Before the dmin argument was given, maybe it speeds up the search?
+
     double dk;
     double oldDk;
     double dEntryParent;
@@ -126,8 +128,6 @@ void LeafNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::ve
         dk = nnList.getMaxDistance();
 
         // Check if is root
-        dEntryParent;
-        dQueryParent;
         if (this->isRoot)
         {
             // If it is root, set d(entry, parent) = 0 to avoid pruning

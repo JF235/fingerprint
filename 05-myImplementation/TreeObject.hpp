@@ -18,7 +18,7 @@ class TreeObject {
 public:
     typedef std::shared_ptr<Node<T>> NodePtr;
 
-    TreeObject(const T &representative, double coveringRadius, NodePtr subtree, double distanceToParent)
+    TreeObject(const T &representative, double coveringRadius, double distanceToParent)
         : representative(representative), coveringRadius(coveringRadius), subtree(nullptr), distanceToParent(distanceToParent) {}
     virtual ~TreeObject() = default;
     
@@ -51,9 +51,9 @@ public:
 
 protected:
     const T& representative;           //> The representative of this object
+    double coveringRadius;      //> The covering radius of this object
     NodePtr subtree;            //> The subtree of this object
     NodePtr currentNode;        //> The node that contains this object
-    double coveringRadius;      //> The covering radius of this object
     double distanceToParent;    //> Distance to the parent node
 
     // Cache for distance calculation
@@ -71,8 +71,8 @@ class RoutingObject : public TreeObject<T> {
 public:
     typedef std::shared_ptr<Node<T>> NodePtr;
 
-    RoutingObject(const T &representative, double coveringRadius, NodePtr subtree, double distanceToParent)
-        : TreeObject<T>(representative, coveringRadius, subtree, distanceToParent) {}
+    RoutingObject(const T &representative, double coveringRadius, double distanceToParent)
+        : TreeObject<T>(representative, coveringRadius, distanceToParent) {}
 };
 
 /**
@@ -86,7 +86,7 @@ public:
     typedef std::shared_ptr<Node<T>> NodePtr;
 
     LeafObject(const T &representative, double distanceToParent)
-        : TreeObject<T>(representative, 0.0, nullptr, distanceToParent) {}
+        : TreeObject<T>(representative, 0.0, distanceToParent) {}
 
 };
 

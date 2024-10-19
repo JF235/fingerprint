@@ -171,9 +171,9 @@ public:
         return id == other.id;
     }
 
+    std::vector<NumT> values;   ///< Vector of values
 private:
     uint32_t id;                ///< Unique identifier
-    std::vector<NumT> values;   ///< Vector of values
     size_t printLimit = 5;      ///< 0 means no limit
     static uint32_t nextId;     ///< Next unique identifier
 };

@@ -146,7 +146,7 @@ void InternalNode<T>::updateRoutingObject(TreeObjectPtr p, std::vector<TreeObjec
 }
 
 template <typename T>
-void InternalNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const
+void InternalNode<T>::search(const T &query, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const
 {
     // For all entries in node
     for (const auto &entry : this->entries)
