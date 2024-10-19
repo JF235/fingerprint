@@ -1,8 +1,8 @@
 #ifndef NNLIST_HPP
 #define NNLIST_HPP
 
-#include <vector>
-#include <limits>
+#include <vector>  // For std::vector
+#include <limits>  // For std::numeric_limits
 #include <ostream> // For std::ostream
 #include <cstddef> // For std::size_t
 
@@ -16,6 +16,12 @@ struct NNEntry {
     T element;
     double distance;
 
+    /**
+     * @brief Constructs an NNEntry with the given element and distance.
+     * 
+     * @param elem The element to store in the entry.
+     * @param dist The distance associated with the element.
+     */
     NNEntry(const T& elem, double dist) : element(elem), distance(dist) {}
 
     /**
@@ -49,7 +55,7 @@ template <typename T>
 class NNList {
 public:
     /**
-     * @brief Constructs an NNList with the given number of empty elements, with the default distance set to infinity.
+     * @brief Constructs an empty NNList, just allocating memory for the list.
      * 
      * @param k The number of empty elements to initialize the list with. Default is 0.
      */
@@ -58,8 +64,8 @@ public:
     /**
      * @brief Constructs an NNList with the given number of empty elements, with the default distance set to the specified value.
      * 
-     * @param k The number of empty elements to initialize the list with. Default is 0.
-     * @param dist The default distance to set for the elements. Default is infinity.
+     * @param k The number of empty elements to initialize the list with.
+     * @param dist The default distance to set for the elements.
      */
     NNList(size_t k, double dist);
 
@@ -76,7 +82,7 @@ public:
      * In the latter case, the farthest entry is removed to maintain the correct size of the list.
      * 
      * @tparam T The type of the elements in the list.
-     * @param value The element to insert.
+     * @param element The element to insert.
      * @param distance The distance associated with the element.
      */
     void insert(const T& element, double distance);
@@ -162,8 +168,8 @@ public:
         return entries[index];
     }
 
-    std::vector<NNEntry<T>> entries;
 private:
+    std::vector<NNEntry<T>> entries;
     double maxDistance;
     size_t currentSize;
     size_t maxSize;

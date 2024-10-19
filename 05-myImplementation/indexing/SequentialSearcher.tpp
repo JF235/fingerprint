@@ -2,7 +2,7 @@
 
 // Constructor
 template <typename T, typename DistanceFunc>
-SequentialSearcher<T, DistanceFunc>::SequentialSearcher(DistanceFunc distFunc)
+SequentialSearcher<T, DistanceFunc>::SequentialSearcher(DistanceFunc &distFunc)
     : distanceFunc(distFunc) {}
 
 // Method to perform k-nearest neighbors search
@@ -11,11 +11,12 @@ NNList<T> SequentialSearcher<T, DistanceFunc>::knn(const T &query, size_t k) con
 {
     NNList<T> nnList(k);
 
+    // Sequentially calculate the distance between the query object and all objects in dataObjects
+    // Takes O(n) distance calculations
     for (const auto &obj : dataObjects)
     {
         double dist = distanceFunc(query, obj);
 
-        // nnList.insert
         nnList.insert(obj, dist);
     }
 

@@ -19,8 +19,11 @@ NNList<T>::~NNList() {}
 
 template <typename T>
 void NNList<T>::forceInsert(const NNEntry<T>& entry) {
+    // Insert the entry in the correct position
+    // The list is always sorted by distance
     auto it = std::lower_bound(entries.begin(), entries.end(), entry);
     entries.insert(it, entry);
+    
     // Check if needs to update maxDistance
     if (entries.back().distance < maxDistance) {
         maxDistance = entries.back().distance;
@@ -32,6 +35,7 @@ template <typename T>
 void NNList<T>::insert(const T& value, double distance) {
     if (currentSize < maxSize || distance < getMaxDistance()) {
         forceInsert(NNEntry<T>{value, distance});
+        
         // If the inserted item exceeds the maximum size, remove the last element
         if (currentSize > maxSize) {
             entries.pop_back();

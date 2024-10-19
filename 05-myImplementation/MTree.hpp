@@ -9,10 +9,9 @@
 #include <stdexcept>
 #include "MTreeNodes.hpp"
 #include "TreeObject.hpp"
-#include "debug_msg.hpp"
-#include "NNList.hpp"
-
-size_t maxNodeId = 0; ///< Counter to generate unique IDs for nodes.
+#include "includes/dbgmsg.hpp"
+#include "indexing/NNList.hpp"
+#include "indexing/DistanceFunction.hpp"
 
 /**
  * @brief Class representing an M-Tree.
@@ -25,8 +24,8 @@ template <typename T>
 class MTree
 {
 public:
-    typedef std::function<double(const T &, const T &)> Metric; ///< Function type for computing the distance between two elements.
-    typedef std::shared_ptr<Node<T>> NodePtr;                   ///< Shared pointer to a node in the M-Tree.
+    typedef std::shared_ptr<Node<T>> NodePtr;
+
 
     /**
      * @brief Constructs an M-Tree with a specified maximum node capacity and distance function.
@@ -40,10 +39,10 @@ public:
      *                  3. d(x, y) = d(y, x) for all x, y
      *                  4. d(x, z) <= d(x, y) + d(y, z) for all x, y, z
      */
-    MTree(size_t maxNodeCapacity, Metric distance)
-        : maxNodeCapacity(maxNodeCapacity), distance(distance), nextNodeId(0), treeSize(0), height(1)
+    MTree(size_t maxNodeCapacity, DistanceFunction<T> &distance)
+        : maxNodeCapacity(maxNodeCapacity), distance(distance), treeSize(0), height(1)
     {
-        root = std::make_shared<LeafNode<T>>(nextNodeId++, maxNodeCapacity, true, nullptr, nullptr);
+        root = std::make_shared<LeafNode<T>>(maxNodeCapacity, true, nullptr, nullptr);
     }
 
     /**
@@ -67,11 +66,10 @@ public:
             while (node->getIsRoot() == false)
                 node = node->getParentNode();
             
-            // Found the new root
             root = node;
             INSDEBUG_MSG("New root is node " << root->getNodeId());
 
-            // Update the height of the tree
+            // Update the height of the tree, because a split in the root node increases the height
             height++;
         }
 
@@ -85,10 +83,11 @@ public:
      * @param k The number of nearest neighbors to search for.
      * @return A list of the k nearest neighbors.
      */
-    NNList<T> search(const T &query, size_t k) {
+    NNList<T> knn(const T &query, size_t k) {
+        // Benchmarking
         nodesAccessed = 0;
 
-        /* Create a list to store the k nearest neighbors.
+        /* Create a list to store the k nearest neighbors, initialized with infinite distance.
         The list is sorted in ascending order of distance to the query. */
         NNList<T> nnList(k, std::numeric_limits<double>::infinity());
         
@@ -99,19 +98,22 @@ public:
         If dmin = 0, the query is in the subtree defined by the node. */
         std::vector<std::pair<NodePtr, double>> candidates;
         
-        // The lower bound doesnt matter for the root node
+        // The lower bound doesnt matter for the root node, so initialize it with 0
         candidates.emplace_back(root, 0.0);
 
         KNNDEBUG_MSG("KNN: " << nnList);
         #ifdef KNNDEBUG
         printCandidates(candidates);
         #endif
+
+        // Search for the k nearest neighbors
         while (!candidates.empty())
         {
-            // Select entry which the lower bound is the smallest
+            // Select entry which the lower bound (dmin) is the smallest
             auto minCandidate = std::min_element(candidates.begin(), candidates.end(), [](const auto &a, const auto &b) {
                 return a.second < b.second;
             });
+            
             // Then remove the pair from the candidates list
             NodePtr node = minCandidate->first;
             double dmin = minCandidate->second;
@@ -122,12 +124,12 @@ public:
             nodesAccessed++;
             node->search(query, dmin, nnList, candidates, distance);
 
-
             KNNDEBUG_MSG("KNN: " << nnList);
             #ifdef KNNDEBUG
             printCandidates(candidates);
             #endif
         }
+        
         return nnList;
     }
 
@@ -188,13 +190,15 @@ private:
         std::cout << std::endl;
     }
 
-    size_t maxNodeCapacity;        ///< The maximum number of elements a node can hold.
-    Metric distance;               ///< Function to compute the distance between two elements.
+    size_t treeSize;                ///< Number of elements in the M-Tree.
+    size_t height;                  ///< Height of the M-Tree.
+    
     NodePtr root;                   ///< Pointer to the root node of the M-Tree.
-    size_t nextNodeId;             ///< Counter to generate unique IDs for nodes.
-    size_t treeSize;                   ///< Number of elements in the M-Tree.
-    size_t height;                 ///< Height of the M-Tree.
-    size_t nodesAccessed;      ///< Number of nodes accessed during search.
+    size_t maxNodeCapacity;         ///< The maximum number of elements a node can hold.
+    DistanceFunction<T> &distance;   ///< Function that computes the distance between two elements of type T.
+    
+    // Parameters for benchmarking
+    size_t nodesAccessed;           ///< Number of nodes accessed during search.
 };
 
 #endif // MTREE_HPP

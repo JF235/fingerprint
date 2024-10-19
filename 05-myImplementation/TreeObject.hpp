@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <functional>
+#include "indexing/DistanceFunction.hpp"
 
 template <typename T>
 class Node; // Forward declaration
@@ -15,24 +16,32 @@ class Node; // Forward declaration
 template <typename T>
 class TreeObject {
 public:
-    TreeObject(T representative, double coveringRadius, std::shared_ptr<Node<T>> subtree, double distanceToParent)
+    typedef std::shared_ptr<Node<T>> NodePtr;
+
+    TreeObject(const T &representative, double coveringRadius, NodePtr subtree, double distanceToParent)
         : representative(representative), coveringRadius(coveringRadius), subtree(nullptr), distanceToParent(distanceToParent) {}
     virtual ~TreeObject() = default;
     
     const T& getRepresentative() const { return representative; }
-    double getCoveringRadius() const { return coveringRadius; }
+    
     double getDistanceToParent() const { return distanceToParent; }
     void setDistanceToParent(double distanceToParent) { this->distanceToParent = distanceToParent; }
+    
+    double getCoveringRadius() const { return coveringRadius; }
     void setCoveringRadius(double coveringRadius) { this->coveringRadius = coveringRadius; }
-    std::shared_ptr<Node<T>> getSubtree() const { return subtree; }
-    void setSubtree(std::shared_ptr<Node<T>> subtree) { this->subtree = subtree; }
-    void setCurrentNode(std::shared_ptr<Node<T>> currentNode) { this->currentNode = currentNode; }
-    std::shared_ptr<Node<T>> getCurrentNode() const { return currentNode; }
+    
+    NodePtr getSubtree() const { return subtree; }
+    void setSubtree(NodePtr subtree) { this->subtree = subtree; }
+    
+    NodePtr getCurrentNode() const { return currentNode; }
+    void setCurrentNode(NodePtr currentNode) { this->currentNode = currentNode; }
 
-    double calculateDistanceToQuery(const T &query, std::function<double(const T &, const T &)> distance) {
+    double calculateDistanceToQuery(const T &query, DistanceFunction<T> &distance) {
+        // If the query is the same as the cached query, return the cached distance
         if (query == this->query) {
             return distanceToQuery;
         } else {
+            // Otherwise, calculate the distance and cache the new query and distance
             distanceToQuery = distance(query, representative);
             this->query = query;
             return distanceToQuery;
@@ -41,13 +50,15 @@ public:
 
 
 protected:
-    T representative;
-    double coveringRadius;
-    std::shared_ptr<Node<T>> subtree;
-    std::shared_ptr<Node<T>> currentNode;
-    double distanceToParent;
-    double distanceToQuery;
-    T query;
+    const T& representative;           //> The representative of this object
+    NodePtr subtree;            //> The subtree of this object
+    NodePtr currentNode;        //> The node that contains this object
+    double coveringRadius;      //> The covering radius of this object
+    double distanceToParent;    //> Distance to the parent node
+
+    // Cache for distance calculation
+    double distanceToQuery;     //> Cached distance to query
+    T query;                    //> Cache the query for distance calculation
 };
 
 /**
@@ -58,7 +69,9 @@ protected:
 template <typename T>
 class RoutingObject : public TreeObject<T> {
 public:
-    RoutingObject(T representative, double coveringRadius, std::shared_ptr<Node<T>> subtree, double distanceToParent)
+    typedef std::shared_ptr<Node<T>> NodePtr;
+
+    RoutingObject(const T &representative, double coveringRadius, NodePtr subtree, double distanceToParent)
         : TreeObject<T>(representative, coveringRadius, subtree, distanceToParent) {}
 };
 
@@ -70,7 +83,9 @@ public:
 template <typename T>
 class LeafObject : public TreeObject<T> {
 public:
-    LeafObject(T representative, double distanceToParent)
+    typedef std::shared_ptr<Node<T>> NodePtr;
+
+    LeafObject(const T &representative, double distanceToParent)
         : TreeObject<T>(representative, 0.0, nullptr, distanceToParent) {}
 
 };

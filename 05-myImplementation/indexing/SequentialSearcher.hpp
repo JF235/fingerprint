@@ -2,8 +2,8 @@
 #define SEQUENTIAL_SEARCHER_HPP
 
 #include <vector>
-#include <functional> // For std::function
-#include <typeinfo> // For typeid
+#include <functional>   // For std::function
+#include <typeinfo>     // For typeid
 #include "NNList.hpp"
 
 /**
@@ -20,7 +20,7 @@ public:
      * 
      * @param distFunc The distance function to evaluate distance between objects.
      */
-    SequentialSearcher(DistanceFunc distFunc);
+    SequentialSearcher(DistanceFunc &distFunc);
 
     /**
      * @brief Performs k-nearest neighbors search.
@@ -64,7 +64,7 @@ public:
 
 private:
     std::vector<T> dataObjects; ///< The data objects to be searched.
-    DistanceFunc distanceFunc; ///< The distance function to evaluate distance between objects.
+    DistanceFunc &distanceFunc; ///< The distance function to evaluate distance between objects.
 };
 
 #include "SequentialSearcher.tpp"

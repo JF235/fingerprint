@@ -8,35 +8,37 @@
 #include <iostream> // For std::ostream
 #include <limits>   // For std::numeric_limits
 #include "TreeObject.hpp"
-#include "debug_msg.hpp"
-#include "NNList.hpp"
-
-extern size_t maxNodeId;
+#include "indexing/DistanceFunction.hpp"
+#include "includes/dbgmsg.hpp"
+#include "indexing/NNList.hpp"
 
 /**
  * @brief Base class for a node in the M-Tree.
  *
  * @tparam T The type of elements stored in the M-Tree.
+ * @tparam DistanceFunction The distance function to be used.
  */
 template <typename T>
-class Node : public std::enable_shared_from_this<Node<T>>
+class Node : public std::enable_shared_from_this<Node<T>> // For shared_from_this()
 {
 public:
+    typedef Node<T> NodeType;
     typedef std::shared_ptr<TreeObject<T>> TreeObjectPtr;
-    typedef std::shared_ptr<Node<T>> NodePtr;
-    typedef std::function<double(const T &, const T &)> Metric;
+    typedef std::shared_ptr<NodeType> NodePtr;
+    typedef DistanceFunction<T>& Metric;
 
     /**
      * @brief Constructs a Node.
      *
-     * @param nodeId The unique ID of the node.
      * @param maxCapacity The maximum number of elements the node can hold.
      * @param isRoot Whether the node is the root node.
      * @param parentNode The parent node.
      * @param parentRoutingObj The parent routing object.
      */
-    Node(size_t nodeId, size_t maxCapacity, bool isRoot = false, NodePtr parentNode = nullptr, TreeObjectPtr parentRoutingObj = nullptr)
-        : nodeId(nodeId), maxCapacity(maxCapacity), isRoot(isRoot), parentNode(parentNode), parentRoutingObj(parentRoutingObj) {}
+    Node(size_t maxCapacity, bool isRoot = false, NodePtr parentNode = nullptr, TreeObjectPtr parentRoutingObj = nullptr)
+        : maxCapacity(maxCapacity), isRoot(isRoot), parentNode(parentNode), parentRoutingObj(parentRoutingObj) {
+        nodeId = nextNodeId++;
+        }
     virtual ~Node() = default;
 
     /**
@@ -118,12 +120,12 @@ public:
     bool getIsLeaf() const { return isLeaf; }
 
     /**
-     * @brief Creates a new node.
+     * @brief Creates a new node based on the type (Leaf/Internal) of the current node.
      *
      * @param nodeId The unique ID of the new node.
      * @return A shared pointer to the new node.
      */
-    virtual NodePtr createNewNode(size_t nodeId) const = 0;
+    virtual NodePtr createNewNode() const = 0;
 
     /**
      * @brief Creates a new root node.
@@ -131,7 +133,7 @@ public:
      * @param nodeId The unique ID of the new root node.
      * @return A shared pointer to the new root node.
      */
-    virtual NodePtr createNewRootNode(size_t nodeId) const = 0;
+    virtual NodePtr createNewRootNode() const = 0;
 
     /**
      * @brief Searches for the nearest neighbors of an element in the node.
@@ -297,16 +299,13 @@ public:
         allEntries.push_back(entry);
 
         // Create a new node
-        maxNodeId = maxNodeId + 1;
-        auto newNode = createNewNode(maxNodeId);
+        auto newNode = createNewNode();
 
-        // PROMOTE
         // Promote two entries to routing objects
         std::pair<TreeObjectPtr, TreeObjectPtr> promoted = promote(allEntries);
         TreeObjectPtr p1 = promoted.first;
         TreeObjectPtr p2 = promoted.second;
 
-        // PARTITION
         // Divides entries of the overflown node into two disjoint sets
         std::pair<std::vector<TreeObjectPtr>, std::vector<TreeObjectPtr>> partEntries = partition(allEntries, p1, p2, distance);
         std::vector<TreeObjectPtr> entries1 = partEntries.first;
@@ -317,7 +316,7 @@ public:
         storeEntries(entries1, this); //  @TODO: Maybe this can be done faster, by just removing the elements that are in entries 2
         storeEntries(entries2, newNode);
 
-
+        #ifdef INSDEBUG
         INSDEBUG_MSG("New Node" << newNode->getNodeId() << ", Promoted " << p1->getRepresentative() << "<" << p1 << ">" << " and " << p2->getRepresentative() << "<" << p2 << ">");
 
         INSDEBUG_INLINE("Partition Node" << this->getNodeId() << "[");
@@ -330,56 +329,54 @@ public:
             INSDEBUG_INLINE(entry->getRepresentative() << "<" << entry << "> ");
         }
         INSDEBUG_INLINE("]\n");
+        #endif
 
         if (isRoot) {
             // The split occurred in the root node
-            // In this case, create a new root node and the height of the tree increases by one
-            maxNodeId = maxNodeId + 1;
-            auto newRoot = createNewRootNode(maxNodeId);
+            // In this case, create a new level on the tree with a new root node
+            auto newRoot = createNewRootNode();
+            isRoot = false; // Reset flag of the old root
+            
             INSDEBUG_MSG("Splitting the root... NewRoot = " << newRoot->getNodeId());
 
-            // Update connections. 
-            // 1. routing object p1 is added to newRoot
-            // 2. p1 points to subtree this
-            // 3. this points to p1 and newRoot
+            // Update connections
             updateRoutingObject(p1, entries1, this->shared_from_this(), newRoot, distance);
-            
-            // 1. routing object p2 is added to newRoot
-            // 2. p2 points to subtree newNode
-            // 3. newNode points to p2 and newRoot
             updateRoutingObject(p2, entries2, newNode, newRoot, distance);
 
-            // Reset flag of the old root
-            isRoot = false;
 
+            #ifdef INSDEBUG
             INSDEBUG_MSG("Node" << p1->getSubtree()->getNodeId() << " linked to routing obj " << p1->getRepresentative() << "<" << p1 << "> (id: " << newRoot->getNodeId() << "), covering radius " << p1->getCoveringRadius());
             
             INSDEBUG_MSG("Node" << p2->getSubtree()->getNodeId() << " linked to routing obj " << p2->getRepresentative() << "<" << p2 << "> (id: " << newRoot->getNodeId() << "), covering radius " << p2->getCoveringRadius());
+            #endif
         } else {
-            // The split occurred in an internal node or leaf node
+            // The split occurred in an internal or leaf
 
-            // In this case, start by replacing the parent routing object with the new routing object p1
+            // In this case, start by replacing the parent routing object
+            // of this node with the new promoted routing object p1
+            // @TODO: Maybe this can be done faster too. Is std::erase the fastest approach?
             bool found = false;
             for (auto &entry : parentNode->entries) {
     
                 if (entry == parentRoutingObj) {
+                    found = true;
+
                     INSDEBUG_MSG("Substituting routing object " << parentRoutingObj->getRepresentative() << "<" << parentRoutingObj << "> in node " << parentNode->getNodeId() << " with " << p1->getRepresentative() << "<" << p1 << ">");
 
-                    found = true;
                     // Remove the parent routing object from the parent node
                     parentNode->entries.erase(std::remove(parentNode->entries.begin(), parentNode->entries.end(), parentRoutingObj), parentNode->entries.end());
 
                     // Update distance to parent for new routing object p1
                     // Get parentRoutingObj from the parent node
                     if (parentNode->getParentRoutingObj() != nullptr)
+                    {
                         p1->setDistanceToParent(distance(p1->getRepresentative(), parentNode->getParentRoutingObj()->getRepresentative()));
-                    // @ TODO: Será que preciso fazer algo parecido em outros lugares?
-                    // Ao inserir o novo routing object, talvez eu tenha que atualizar.
+                    }
 
                     // Update the parent routing object with the new routing object p1
                     updateRoutingObject(p1, entries1, this->shared_from_this(), parentNode, distance);
 
-                    // @TODO: Maybe this can be done faster too
+                    
                     INSDEBUG_MSG("Node" << p1->getSubtree()->getNodeId() << " linked to routing obj " << p1->getRepresentative() << "<" << p1 << "> (id: " << parentNode->getNodeId() << "), covering radius " << p1->getCoveringRadius() << ", parentDistance: " << p1->getDistanceToParent());
                     break;
                 }
@@ -391,21 +388,24 @@ public:
             }
 
             // Now decide what will happen with the new routing object p2
+            // 1. If the parent node has space for the new routing object, insert it
+            // 2. If the parent node is full, split it
 
-            // If the parent node has space for the new routing object, insert it
+
             if (parentNode->entries.size() < maxCapacity) {
+                // The parent node has space for the new routing object
                 updateRoutingObject(p2, entries2, newNode, parentNode, distance);
 
-                INSDEBUG_MSG("Node" << p2->getSubtree()->getNodeId() << " linked to routing obj " << p2->getRepresentative() << "<" << p2 << "> (id: " << parentNode->getNodeId() << "), covering radius " << p2->getCoveringRadius());
-                
-                if (parentNode->getParentRoutingObj() != nullptr)
+                if (parentNode->getParentRoutingObj() != nullptr){
                     p2->setDistanceToParent(distance(p2->getRepresentative(), parentNode->getParentRoutingObj()->getRepresentative()));
+                }
+
+                INSDEBUG_MSG("Node" << p2->getSubtree()->getNodeId() << " linked to routing obj " << p2->getRepresentative() << "<" << p2 << "> (id: " << parentNode->getNodeId() << "), covering radius " << p2->getCoveringRadius());
             } else {
-                // If the parent node is full, split it
+                // The parent node is full. Need to split it
                 // Using the routing object p2 as the new tree entry
 
                 // First, let p2 adopt the remaining entries
-                // Update coveringRadius and subtree for the new routing object p2
                 double maxDistance = 0.0;
                 for (const auto &entry : entries2) {
                     double dist = distance(p2->getRepresentative(), entry->getRepresentative());
@@ -439,9 +439,9 @@ public:
 
                 // @ TODO: Maybe remove it
                 if (p2->getCurrentNode()->getParentRoutingObj() != nullptr)
+                {
                     p2->setDistanceToParent(distance(p2->getRepresentative(), p2->getCurrentNode()->getParentRoutingObj()->getRepresentative()));
-
-                
+                }
             }
         }
     }
@@ -454,6 +454,7 @@ protected:
     std::vector<TreeObjectPtr> entries;
     NodePtr parentNode;
     TreeObjectPtr parentRoutingObj;
+    static size_t nextNodeId;
 
     /**
      * @brief Stores entries in a node.
@@ -482,6 +483,10 @@ protected:
     }
 };
 
+// Static variable initialization to unique node IDs
+template <typename T>
+size_t Node<T>::nextNodeId = 0;
+
 /**
  * @brief Class for a leaf node in the M-Tree.
  *
@@ -493,7 +498,7 @@ class LeafNode : public Node<T>
 public:
     typedef std::shared_ptr<TreeObject<T>> TreeObjectPtr;
     typedef std::shared_ptr<Node<T>> NodePtr;
-    typedef std::function<double(const T &, const T &)> Metric;
+    typedef DistanceFunction<T>& Metric;
 
 
     /**
@@ -505,7 +510,7 @@ public:
      * @param parentNode The parent node.
      * @param parentRoutingObj The parent routing object.
      */
-    LeafNode(size_t nodeId, size_t maxCapacity, bool isRoot, NodePtr parentNode, TreeObjectPtr parentRoutingObj);
+    LeafNode(size_t maxCapacity, bool isRoot, NodePtr parentNode, TreeObjectPtr parentRoutingObj);
 
     /**
      * @brief Inserts an element into the leaf node directly.
@@ -522,7 +527,7 @@ public:
      * @param nodeId The unique ID of the new node.
      * @return A shared pointer to the new node.
      */
-    NodePtr createNewNode(size_t nodeId) const override;
+    NodePtr createNewNode() const override;
 
     /**
      * @brief Creates a new root node.
@@ -530,7 +535,7 @@ public:
      * @param nodeId The unique ID of the new root node.
      * @return A shared pointer to the new root node.
      */
-    NodePtr createNewRootNode(size_t nodeId) const override;
+    NodePtr createNewRootNode() const override;
 
     /**
      * @brief Updates the routing object.
@@ -564,7 +569,7 @@ class InternalNode : public Node<T>
 public:
     typedef std::shared_ptr<TreeObject<T>> TreeObjectPtr;
     typedef std::shared_ptr<Node<T>> NodePtr;
-    typedef std::function<double(const T &, const T &)> Metric;
+    typedef DistanceFunction<T>& Metric;
 
     /**
      * @brief Constructs an InternalNode.
@@ -577,7 +582,7 @@ public:
      * @param parentNode The parent node.
      * @param parentRoutingObj The parent routing object.
      */
-    InternalNode(size_t nodeId, size_t maxCapacity, bool isRoot, NodePtr parentNode, TreeObjectPtr parentRoutingObj);
+    InternalNode(size_t maxCapacity, bool isRoot, NodePtr parentNode, TreeObjectPtr parentRoutingObj);
 
     /**
      * @brief Inserts an element into the internal node.
@@ -597,7 +602,7 @@ public:
      * @param nodeId The unique ID of the new node.
      * @return A shared pointer to the new node.
      */
-    NodePtr createNewNode(size_t nodeId) const override;
+    NodePtr createNewNode() const override;
 
     /**
      * @brief Creates a new root node.
@@ -605,7 +610,7 @@ public:
      * @param nodeId The unique ID of the new root node.
      * @return A shared pointer to the new root node.
      */
-    NodePtr createNewRootNode(size_t nodeId) const override;
+    NodePtr createNewRootNode() const override;
 
     /**
      * @brief Updates the routing object.

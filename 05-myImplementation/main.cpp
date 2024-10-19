@@ -1,9 +1,12 @@
-#include "SequentialSearcher.hpp"
+#include "indexing/SequentialSearcher.hpp"
+#include "indexing/NNList.hpp"
+#include "indexing/DistanceFunction.hpp"
+#include "objectTypes/FloatNumber.hpp"
+#include "objectTypes/Feature.hpp"
 #include "MTree.hpp"
-#include "NNList.hpp"
-#include "distances.hpp"
-#include "FloatNumber.hpp"
-#include "debug_msg.hpp"
+#include "includes/npy.hpp"
+#include "data/randomUnitVectors.hpp"
+#include "data/randomFloats.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -12,80 +15,81 @@
 #include <string>
 
 int seed;
+size_t nodeSize;
 
-typedef SequentialSearcher<FloatNumber, std::function<double(const FloatNumber &, const FloatNumber &)>> mySeqSearcher;
+#ifdef FEATURE
+typedef Feature<float> Obj;
+#endif
 
-// Function to generate a list of random float numbers
-std::vector<float> generateRandomFloats(size_t count, float min, float max)
+#ifdef FLOAT
+typedef FloatNumber Obj;
+#endif
+
+typedef SequentialSearcher<Obj, DistanceFunction<Obj>> mySeqSearcher;
+
+
+// Get time stamp in microseconds.
+uint64_t micros()
 {
-    // Create a random device and seed the random number generator
-    // Set seed to 42
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    gen.seed(seed);
-
-    // Create a uniform distribution for the float numbers
-    std::uniform_real_distribution<float> dis(min, max);
-
-    // Generate the random float numbers
-    std::vector<float> randomFloats;
-    randomFloats.reserve(count);
-    for (size_t i = 0; i < count; ++i)
-    {
-        // Approximate to first decimal place and add
-        randomFloats.push_back(dis(gen));
-    }
-
-    return randomFloats;
+    uint64_t us = std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch())
+            .count();
+    return us; 
 }
 
-void testMTree(std::vector<FloatNumber> &floats, int k)
+
+void testMTree(std::vector<Obj> &dataObjects, std::vector<Obj> &queryObjects, int k, DistanceFunction<Obj> &distanceFunction)
 {
     // Create a tree which element is float and distance function is manhattanDistance
-    MTree<FloatNumber> mtree(32, manhattanDistance<FloatNumber>);
+    MTree<Obj> mtree(nodeSize, distanceFunction);
+    NNList<Obj> nnList(0);
 
     int i = 0;
-    for (const auto &element : floats)
+    auto start = std::chrono::high_resolution_clock::now();
+    for (const auto &element : dataObjects)
     {
         mtree.insert(element);
-        #ifdef INSDEBUG
-        std::cout << mtree << "\n\n\n";
-        #endif
         i++;
     }
-
-    // Reset the distance function calls
-    distanceFunctionCalls = 0;
-    FloatNumber query(0.5);
-    
-    auto start = std::chrono::high_resolution_clock::now();
-    NNList<FloatNumber> nnList = mtree.search(query, k);
     auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration = (end - start) * 1000;
-    std::cout << "Time taken to make query: " << duration.count() << " ms" << std::endl;
-    std::cout << "Number of elements in the tree: " << mtree.size() << std::endl;
-    std::cout << "Distance function calls: " << distanceFunctionCalls << std::endl;
+    std::chrono::duration<double> duration = (end - start);
+    std::cout << "Time taken to build tree: " << duration.count() << " s" << std::endl;
+
+    distanceFunction.resetCounter();
+    // Reset the distance function calls
+    auto startU = micros();
+    for (const auto &query : queryObjects)
+    {
+        nnList = mtree.knn(query, k);
+    }
+    auto endU = micros();
+    std::cout << "Time taken to make query: " << endU - startU << " us" << std::endl;
+    std::cout << "Number of elements in the tree: " << mtree.size() << ", Height: " << mtree.getHeight() << ", Nodes accessed: " << mtree.getNodesAccessed() << std::endl;
+    std::cout << "Distance function calls: " << distanceFunction.distanceFunctionCalls << std::endl;
     std::cout << "MTree KNN: " << nnList << "\n\n\n";
 }
 
-void testSequentialSearcher(std::vector<FloatNumber> floats, int k)
+void testSequentialSearcher(std::vector<Obj> &dataObjects, std::vector<Obj> &queryObjects, int k, DistanceFunction<Obj> &distanceFunction)
 {
+    NNList<Obj> nnList(0);
     // Create a sequential searcher with the distance function manhattanDistance
-    mySeqSearcher seqSearcher(manhattanDistance<FloatNumber>);
+    mySeqSearcher seqSearcher(distanceFunction);
 
-    seqSearcher.addAll(floats);
+    seqSearcher.addAll(dataObjects);
 
     // Reset the distance function calls
-    distanceFunctionCalls = 0;
-    FloatNumber query(0.5);
+    distanceFunction.resetCounter();
 
-    auto start = std::chrono::high_resolution_clock::now();
-    NNList<FloatNumber> nnList = seqSearcher.knn(query, k);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration = (end - start) * 1000;
-    std::cout << "Time taken to make query: " << duration.count() << " ms" << std::endl;
+    auto startU = micros();
+    // Go through all the query objects
+    for (const auto &query : queryObjects)
+    {
+        nnList = seqSearcher.knn(query, k);
+    }
+    auto endU = micros();
+    std::cout << "Time taken to make query: " << endU - startU << " us" << std::endl;
     std::cout << "Number of elements in the search structure: " << seqSearcher.size() << std::endl;
-    std::cout << "Distance function calls: " << distanceFunctionCalls << std::endl;
+    std::cout << "Distance function calls: " << distanceFunction.distanceFunctionCalls << std::endl;
     std::cout << "SeqSearch KNN: " << nnList << std::endl;
 }
 
@@ -93,10 +97,14 @@ void testSequentialSearcher(std::vector<FloatNumber> floats, int k)
 int main(int argc, char *argv[])
 {
     seed = 263;
+    nodeSize = 64;
     int k = 4;
     int N = 20;
+    int querySize = 10;
+    int dimension = 10;
+    double maxf = 100.;
 
-    for (int i = 1; i < argc; i+=2)
+    for (int i = 1; i < argc; i += 2)
     {
         if (std::string(argv[i]) == "-s")
         {
@@ -110,23 +118,42 @@ int main(int argc, char *argv[])
         {
             N = std::stoi(argv[i + 1]);
         }
+        else if (std::string(argv[i]) == "-nodeSize")
+        {
+            nodeSize = std::stoi(argv[i + 1]);
+        }
+        else if (std::string(argv[i]) == "-querySize")
+        {
+            querySize = std::stoi(argv[i + 1]);
+        }
+        #ifdef FEATURE
+        else if (std::string(argv[i]) == "-dimension")
+        {
+            dimension = std::stoi(argv[i + 1]);
+        }
+        #endif
+        #ifdef FLOAT
+        else if (std::string(argv[i]) == "-maxf")
+        {
+            maxf = std::stod(argv[i + 1]);
+        }
+        #endif
     }
+
+    #ifdef FEATURE
+    std::vector<Obj> dataObjects = generateUnitVectors<Obj, float>(N, dimension, seed);
+    std::vector<Obj> queryObjects = generateUnitVectors<Obj, float>(querySize, dimension, seed + 1);
+    #endif
+
+    #ifdef FLOAT
+    std::vector<Obj> dataObjects = generateRandomFloats<Obj, float>(N, -maxf, maxf, seed);
+    std::vector<Obj> queryObjects = generateRandomFloats<Obj, float>(querySize, -maxf, maxf, seed + 1);
+    #endif
+
+    EuclideanDistance<Obj> euclideanDistance;
+
+    testSequentialSearcher(dataObjects, queryObjects, k, euclideanDistance);
+    testMTree(dataObjects, queryObjects, k, euclideanDistance);
     
-
-
-    std::vector<FloatNumber> floats;
-
-    std::vector<float> randomFloats = generateRandomFloats(N, 0.0f, 1000.0f);
-    //std::vector<float> randomFloats = generateRandomFloats(1000, 0.0f, 100.0f);
-
-    // Reserve space for the FloatNumber objects to avoid multiple reallocations
-    floats.reserve(randomFloats.size());
-    for (const auto &element : randomFloats)
-    {
-        floats.emplace_back(element);
-    }
-
-    testMTree(floats, k);
-    testSequentialSearcher(floats, k);
     return 0;
 }

@@ -4,8 +4,8 @@
 #include "MTreeNodes.hpp"
 
 template <typename T>
-LeafNode<T>::LeafNode(size_t nodeId, size_t maxCapacity, bool isRoot, NodePtr parentNode, TreeObjectPtr parentRoutingObj)
-    : Node<T>(nodeId, maxCapacity, isRoot, parentNode, parentRoutingObj)
+LeafNode<T>::LeafNode(size_t maxCapacity, bool isRoot, NodePtr parentNode, TreeObjectPtr parentRoutingObj)
+    : Node<T>(maxCapacity, isRoot, parentNode, parentRoutingObj)
 {
     this->isLeaf = true;
 }
@@ -13,6 +13,7 @@ LeafNode<T>::LeafNode(size_t nodeId, size_t maxCapacity, bool isRoot, NodePtr pa
 template <typename T>
 void LeafNode<T>::insert(const T &element, Metric distance)
 {
+    // Check if the node is not full
     if (this->entries.size() < this->maxCapacity)
     {
         // Check if its root
@@ -30,30 +31,33 @@ void LeafNode<T>::insert(const T &element, Metric distance)
             // Get the distance to the parent
             double dist = distance(element, this->parentRoutingObj->getRepresentative());
 
-            this->entries.emplace_back(std::make_shared<LeafObject<T>>(element, dist)); // distanceToParent is inf for new elements
+            // Insert the element
+            this->entries.emplace_back(std::make_shared<LeafObject<T>>(element, dist));
+
             INSDEBUG_MSG("Inserted [element: " << element << "<" << this->entries.back() << ">" << ", dist2parent: " << dist << "] into node [id: " << this->getNodeId() << ", size: " << this->entries.size() << ", parent: " << this->parentRoutingObj->getRepresentative() << "]");
         }
     }
     else
     {
-        // INSDEBUG_MSG("Leaf node " << this->getNodeId() << " is full. Cannot insert element " << element);
         INSDEBUG_MSG("Node " << this->getNodeId() << " Full and Splitting");
+        
+        // If the node is full, split it
         this->split(std::make_shared<LeafObject<T>>(element, std::numeric_limits<float>::infinity()), distance);
     }
 }
 
 // Create New Node
 template <typename T>
-typename LeafNode<T>::NodePtr LeafNode<T>::createNewNode(size_t nodeId) const
+typename LeafNode<T>::NodePtr LeafNode<T>::createNewNode() const
 {
-    return std::make_shared<LeafNode<T>>(nodeId, this->maxCapacity, false, nullptr, nullptr);
+    return std::make_shared<LeafNode<T>>(this->maxCapacity, false, nullptr, nullptr);
 }
 
 // Create New Root Node
 template <typename T>
-typename LeafNode<T>::NodePtr LeafNode<T>::createNewRootNode(size_t nodeId) const
+typename LeafNode<T>::NodePtr LeafNode<T>::createNewRootNode() const
 {
-    return std::make_shared<InternalNode<T>>(nodeId, this->maxCapacity, true, nullptr, nullptr);
+    return std::make_shared<InternalNode<T>>(this->maxCapacity, true, nullptr, nullptr);
 }
 
 template <typename T>
@@ -111,6 +115,7 @@ template <typename T>
 void LeafNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::vector<std::pair<NodePtr, double>> &candidates, Metric distance) const
 {
     double dk;
+    double oldDk;
     double dEntryParent;
     double dQueryParent;
     double dEntryQuery;
@@ -137,8 +142,6 @@ void LeafNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::ve
             //dQueryParent = distance(query, this->parentRoutingObj->getRepresentative());
         }
 
-        // @TODO: If I store the distance once is computed, I can avoid this computation
-
         // It can prune without computing the distance
         if (std::fabs(dEntryParent - dQueryParent) <= dk)
         {
@@ -154,6 +157,7 @@ void LeafNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::ve
                 nnList.insert(entry->getRepresentative(), dEntryQuery);
 
                 // Get new dk
+                oldDk = dk;
                 dk = nnList.getMaxDistance();
 
 #ifdef KNNDEBUG
@@ -175,9 +179,12 @@ void LeafNode<T>::search(const T &query, double dmin, NNList<T> &nnList, std::ve
 #endif
 
                 // Prune all candidates which lower bound is greater than dk
-                candidates.erase(std::remove_if(candidates.begin(), candidates.end(), [dk](const std::pair<NodePtr, double> &candidate)
-                                                { return candidate.second > dk; }),
-                                 candidates.end());
+                if (dk != oldDk)
+                {
+                    candidates.erase(std::remove_if(candidates.begin(), candidates.end(), [dk](const std::pair<NodePtr, double> &candidate)
+                                                    { return candidate.second > dk; }),
+                                     candidates.end());
+                }
             }
         }
     }

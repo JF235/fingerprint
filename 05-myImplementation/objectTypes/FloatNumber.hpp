@@ -1,3 +1,6 @@
+#ifndef FLOATNUMBER_HPP
+#define FLOATNUMBER_HPP
+
 #include <stdexcept> // For std::out_of_range
 #include <iostream> // For std::ostream
 
@@ -103,3 +106,5 @@ private:
 
 // Initialize the static member variable
 size_t FloatNumber::nextOid = 1;
+
+#endif // FLOATNUMBER_HPP
