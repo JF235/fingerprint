@@ -1,61 +1,69 @@
-"""
-g++ main.cpp -o main.exe -O3 -DFLOAT -DSEQUENTIAL
-.\main.exe -N 100000 -querySize 10000 -k 32 -s 42 -maxf 100000
+import os
+import itertools
+import subprocess
+import argparse
 
-Number of elements: 100000, Number of queries: 10000
-Dimension: 1, k: 32
+# Define the datasets and structures
+#datasets = ["UNIT", "UNIFORM", "FLOAT"]
+datasets = ["UNIT"]
+structures = ["TREE", "SEQUENTIAL"]
 
-Total Time: 6.501480 s
-Average Time: 650 us
-Distance function calls: 1000000000
+# Define the parameters for the program
+N_values = [100000]
+Q_values = [500]
+K_values = [10]
+S_values = [42]
+M_values = [10.0]
+D_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 20]
+NS_values = [512]
 
-KNN[end] result: [(68956.65, 0.24), (68957.89, 1.48), (68958.07, 1.66), (68958.34, 1.94), (68958.92, 2.52), (68959.06, 2.66), (68959.52, 3.11), (68953.04, 3.37), (68952.55, 3.86), (68952.07, 4.34), (68961.13, 4.73), (68962.34, 5.93), (68963.21, 6.80), (68965.27, 8.87), (68965.73, 9.32), (68969.64, 13.23), (68941.84, 14.57), (68941.84, 14.57), (68972.47, 16.06), (68972.82, 16.41), (68938.98, 17.42), (68974.27, 17.86), (68975.06, 18.66), (68975.19, 18.78), (68978.02, 21.61), (68933.18, 23.23), (68982.81, 26.41), (68984.41, 28.01), (68985.62, 29.21), (68926.54, 29.87), (68988.01, 31.60), (68989.90, 33.49)]
-"""
+# Output file for benchmark results
+output_file = "benchmark_results.txt"
 
-"""
-g++ main.cpp -o main.exe -O3 -DFLOAT -DTREE
-.\main.exe -N 100000 -querySize 10000 -k 32 -s 42 -maxf 100000 -nodeSize 512
-Time taken to build tree: 0.187997 s
+def compile_program(dataset, structure):
+    compile_command = f"g++ main.cpp -o main.exe -O3 -D{dataset} -D{structure}"
+    print(f"Compiling with dataset={dataset} and structure={structure}")
+    subprocess.run(compile_command, shell=True, check=True)
 
-Number of elements: 100000, Number of queries: 10000
-Dimension: 1, k: 32
-
-Total Time: 3.006520 s
-Average Time: 300 us
-Height: 2, Nodes accessed: 32/281
-Distance function calls: 8799008
-
-KNN[end] result: [(68956.65, 0.24), (68957.89, 1.48), (68958.07, 1.66), (68958.34, 1.94), (68958.92, 2.52), (68959.06, 2.66), (68959.52, 3.11), (68953.04, 3.37), (68952.55, 3.86), (68952.07, 4.34), (68961.13, 4.73), (68962.34, 5.93), (68963.21, 6.80), (68965.27, 8.87), (68965.73, 9.32), (68969.64, 13.23), (68941.84, 14.57), (68941.84, 14.57), (68972.47, 16.06), (68972.82, 16.41), (68938.98, 17.42), (68974.27, 17.86), (68975.06, 18.66), (68975.19, 18.78), (68978.02, 21.61), (68933.18, 23.23), (68982.81, 26.41), (68984.41, 28.01), (68985.62, 29.21), (68926.54, 29.87), (68988.01, 31.60), (68989.90, 33.49)]
-"""
-
-"""
-g++ main.cpp -o main.exe -O3 -DUNIT -DTREE
-.\main.exe -N 100000 -querySize 100 -k 32 -s 42 -nodeSize 1024 -dimension 128
-Time taken to build tree: 1.19513 s
-
-Number of elements: 100000, Number of queries: 100
-Dimension: 128, k: 32
-
-Total Time: 3.861748 s
-Average Time: 38.617000 ms
-Height: 2, Nodes accessed: 129/129(= 100%)
-Distance function calls: 10019146
-
-KNN[end] result: [(id:24143, 1.13), (id:93470, 1.14), (id:8987, 1.14), (id:65125, 1.14), (id:60723, 1.15), (id:84961, 1.16), (id:78222, 1.16), (id:13875, 1.16), (id:43561, 1.16), (id:35134, 1.17), (id:88158, 1.17), (id:62496, 1.17), (id:45600, 1.17), (id:35376, 1.17), (id:93959, 1.17), (id:2333, 1.17), (id:19033, 1.17), (id:49621, 1.18), (id:60742, 1.18), (id:62808, 1.18), (id:52503, 1.18), (id:85133, 1.18), (id:57061, 1.18), (id:25063, 1.18), (id:51732, 1.18), (id:5700, 1.18), (id:57193, 1.18), (id:92358, 1.19), (id:5577, 1.19), (id:79610, 1.19), (id:47327, 1.19), (id:75307, 1.19)]
-"""
-
-"""
-g++ main.cpp -o main.exe -O3 -DUNIT -DSEQUENTIAL
-.\main.exe -N 100000 -querySize 100 -k 32 -s 42 -maxf 100000 -dimension 128
-Number of elements: 100000, Number of queries: 100
-Dimension: 128, k: 32
-
-Total Time: 1.688578 s
-Average Time: 16.885000 ms
-Distance function calls: 10000000
-
-KNN[end] result: [(id:24143, 1.13), (id:93470, 1.14), (id:8987, 1.14), (id:65125, 1.14), (id:60723, 1.15), (id:84961, 1.16), (id:78222, 1.16), (id:13875, 1.16), (id:43561, 1.16), (id:35134, 1.17), (id:88158, 1.17), (id:62496, 1.17), (id:45600, 1.17), (id:35376, 1.17), (id:93959, 1.17), (id:2333, 1.17), (id:19033, 1.17), (id:49621, 1.18), (id:60742, 1.18), (id:62808, 1.18), (id:52503, 1.18), (id:85133, 1.18), (id:57061, 1.18), (id:25063, 1.18), (id:51732, 1.18), (id:5700, 1.18), (id:57193, 1.18), (id:92358, 1.19), (id:5577, 1.19), (id:79610, 1.19), (id:47327, 1.19), (id:75307, 1.19)]
-"""
+def run_program(N, Q, K, S, M, D, NS, dataset, structure):
+    command = f".\\main.exe -N {N} -querySize {Q} -k {K} -s {S} -maxf {M}"
+    if dataset in ["UNIT", "UNIFORM"]:
+        command += f" -dimension {D}"
+    if structure == "TREE":
+        command += f" -nodeSize {NS}"
+    
+    print(f"Running: {command}")
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    
+    with open(output_file, "a") as f:
+        f.write(f"Dataset: {dataset}, Structure: {structure}, N: {N}, Q: {Q}, K: {K}, S: {S}, M: {M}, D: {D}, NS: {NS}\n")
+        f.write(result.stdout)
+        f.write(result.stderr)
+        f.write("\n")
 
 def main():
-    pass
+    parser = argparse.ArgumentParser(description="Benchmarking script for C++ program.")
+    parser.add_argument("-o", "--output", type=str, default="benchmark_results.txt", help="Output file for benchmark results")
+    args = parser.parse_args()
+    
+    global output_file
+    output_file = args.output
+    
+    # Clear the output file
+    with open(output_file, "w") as f:
+        f.write("Benchmark Results\n")
+        f.write("=================\n\n")
+    
+    # Compile and run benchmarks for each combination of dataset and structure
+    for dataset, structure in itertools.product(datasets, structures):
+        compile_program(dataset, structure)
+        
+        # Generate the cartesian product of all parameter values
+        for N, Q, K, S, M, D, NS in itertools.product(N_values, Q_values, K_values, S_values, M_values, D_values, NS_values):
+            run_program(N, Q, K, S, M, D, NS, dataset, structure)
+            with open(output_file, "a") as f:
+                f.write("=" * 100 + "\n\n")
+            
+
+if __name__ == "__main__":
+    main()
