@@ -7,3 +7,5 @@ real_docker.sh
 main
 settings.json
 .vscode
+04-comparingIndexing/trees
+04-comparingIndexing/datasets

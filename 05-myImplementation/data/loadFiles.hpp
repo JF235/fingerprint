@@ -4,9 +4,10 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <ostream>
 #include <chrono>
-#include "objectTypes/Feature.hpp"
-#include "includes/npy.hpp"
+#include "../objectTypes/Feature.hpp"
+#include "../includes/npy.hpp"
 
 typedef Feature<float> feature;
 
@@ -58,7 +59,7 @@ std::vector<feature> loadQueries(size_t N, std::string filename)
 
 std::vector<feature> loadData(size_t N, std::string filename)
 {
-    std::vector<feature> dataFeatureects;
+    std::vector<feature> dataFeatures;
 
     auto start = std::chrono::high_resolution_clock::now();
     std::vector<float> data;
@@ -69,23 +70,24 @@ std::vector<feature> loadData(size_t N, std::string filename)
     data = std::move(d.data);   // Use std::move to avoid copying
     shape = std::move(d.shape); // Use std::move to avoid copying
 
-    // std::cout << "Loading data objects with shape: " << shape[0] << "x" << shape[1] << "\n";
+    std::cout << "Loading data objects with shape: " << shape[0] << "x" << shape[1] << "\n";
 
-    // Reserve space for dataFeatureects to avoid multiple reallocations
-    dataFeatureects.reserve(shape[0]);
+    // Reserve space for dataFeatures to avoid multiple reallocations
+    dataFeatures.reserve(shape[0]);
     // Go through the lines of matrix
     for (uint32_t i = 0; i < shape[0]; i++)
     {
         // Use iterators to avoid copying data to a new vector
         auto startIt = data.begin() + i * shape[1];
         auto endIt = startIt + shape[1];
-        dataFeatureects.emplace_back(i + 100, std::vector<float>(startIt, endIt));
+
+        dataFeatures.emplace_back(std::vector<float>(startIt, endIt));
     }
 
     // Select only the first N elements
-    if (N < dataFeatureects.size())
+    if (N <= dataFeatures.size())
     {
-        dataFeatureects.resize(N);
+        dataFeatures.resize(N);
     }
     else
     {
@@ -94,10 +96,10 @@ std::vector<feature> loadData(size_t N, std::string filename)
 
     // auto end = std::chrono::high_resolution_clock::now();
     // std::chrono::duration<double> duration = (end - start) * 1000;
-    // std::cout << "Added " << dataFeatureects.size() << " data objects\n";
+    // std::cout << "Added " << dataFeatures.size() << " data objects\n";
     // std::cout << "Time taken to load data: " << duration.count() << " ms\n\n";
 
-    return dataFeatureects;
+    return dataFeatures;
 }
 
 #endif // LOADFILE_HPP

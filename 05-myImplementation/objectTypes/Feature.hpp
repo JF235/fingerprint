@@ -5,6 +5,7 @@
 #include <iterator>
 #include <cstdint> // For uint32_t
 #include <iostream> // For std::ostream
+#include <cmath> // For std::sqrt
 
 /**
  * @brief Class representing a feature.
@@ -44,6 +45,17 @@ public:
      * @param vals Vector of values of the Feature.
      */
     Feature(std::vector<NumT>& vals) : values(vals) {
+        id = nextId++;
+    }
+
+    /** 
+     * @brief Other constructor for the case of rvalue reference
+     * 
+     * ID is automatically assigned.
+     * 
+     * @param vals rvalue reference to the vector of values of the Feature.
+     */
+    Feature(std::vector<NumT>&& vals) : values(std::move(vals)) {
         id = nextId++;
     }
 
@@ -171,9 +183,9 @@ public:
         return id == other.id;
     }
 
+    uint32_t id;                ///< Unique identifier
     std::vector<NumT> values;   ///< Vector of values
 private:
-    uint32_t id;                ///< Unique identifier
     size_t printLimit = 5;      ///< 0 means no limit
     static uint32_t nextId;     ///< Next unique identifier
 };

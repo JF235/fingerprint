@@ -8,6 +8,7 @@
 #include "data/randomUnitVectors.hpp"
 #include "data/randomUniformVectors.hpp"
 #include "data/randomFloats.hpp"
+#include "data/loadFiles.hpp"
 //#include "annoy/annoylib.h"
 //#include "annoy/kissrandom.h"
 
@@ -18,7 +19,7 @@
 #include <string>
 #include <iomanip>
 
-#if defined(UNIT) || defined(UNIFORM)
+#if defined(UNIT) || defined(UNIFORM) || defined(NPY)
 typedef Feature<float> Obj;
 #endif
 
@@ -227,6 +228,11 @@ int main(int argc, char *argv[])
 #ifdef FLOAT
     std::vector<Obj> dataObjects = generateRandomFloats<Obj, float>(N, -maxf, maxf, seed);
     std::vector<Obj> queryObjects = generateRandomFloats<Obj, float>(querySize, -maxf, maxf, seed + 1);
+#endif
+
+#ifdef NPY
+    std::vector<Obj> dataObjects = loadData(N, "UNIT_100000_128d.npy");
+    std::vector<Obj> queryObjects = loadData(querySize, "UNIT_100_128d.npy");
 #endif
 
     EuclideanDistance<Obj> euclideanDistance;
