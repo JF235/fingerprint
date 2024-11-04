@@ -100,7 +100,7 @@ class KdTree(Searcher):
             }, file)
 
     def search(
-        self, query: np.ndarray, k: int, **kwargs: Any
+        self, queries: np.ndarray, k: int, **kwargs: Any
     ) -> Tuple[List[int], List[float]]:
         """
         Performs a k-nearest neighbors search using the KD-Tree.
@@ -117,31 +117,41 @@ class KdTree(Searcher):
         if self.kdtree is None or self.data is None:
             raise ValueError("KD-Tree has not been built. Use the 'build' method to load data.")
 
+        num_queries = queries.shape[0] if queries.ndim > 1 else 1
+        
+        self.kdtree.reset_n_calls()
         start_time = time.perf_counter()  # Start timing
 
         # Ensure query is two-dimensional
-        if query.ndim == 1:
-            query = query.reshape(1, -1)
+        if queries.ndim == 1:
+            query = queries.reshape(1, -1)
+            distances, indices = self.kdtree.query(query, k=k, **kwargs)
+        elif num_queries > 1:
+            distances, indices = self.kdtree.query(queries, k=k, **kwargs)
 
-        distances, indices = self.kdtree.query(query, k=k, **kwargs)
-
-        end_time = time.perf_counter()  # End timing
-        elapsed_time = end_time - start_time  # Calculate elapsed time
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        average_time = elapsed_time / num_queries
+        
+        # Get the number of distance calculations
+        distance_calculations = self.kdtree.get_n_calls()
+        average_distance_calculations = distance_calculations / num_queries
 
         # If single query, flatten the results
-        if indices.shape[0] == 1:
+        if num_queries == 1:
             nearest_indices = indices[0].tolist()
             nearest_distances = distances[0].tolist()
         else:
-            # For multiple queries, store lists of lists
             nearest_indices = indices.tolist()
             nearest_distances = distances.tolist()
-
-        # Store the results in last_result
+        
         self._last_result = {
             "indices": nearest_indices,
             "distances": nearest_distances,
             "time_seconds": elapsed_time,
+            "average_time_seconds": average_time,
+            "distance_calculations": distance_calculations,
+            "average_distance_calculations": average_distance_calculations
         }
 
         return nearest_indices, nearest_distances
@@ -149,9 +159,9 @@ class KdTree(Searcher):
     @property
     def last_result(self) -> Optional[Dict[str, Any]]:
         """
-        Retrieves the last search result containing indices, distances, and search time.
+        Retrieves the last search result containing indices, distances, timing information, and distance calculations (total and average).
 
-        :return: Dictionary with keys 'indices', 'distances', and 'time_seconds'.
+        :return: Dictionary with keys "indices", "distances", "time_seconds", "average_time_seconds", and "distance_calculations", "average_distance_calculations".
                  Returns None if no search has been performed yet.
         :rtype: Optional[Dict[str, Any]]
         """

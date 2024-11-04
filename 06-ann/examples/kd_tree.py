@@ -1,6 +1,7 @@
 import sys
 import os
 import numpy as np
+import sklearn
 
 # Add the parent directory to sys.path to locate the jfingerprint package
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -11,16 +12,13 @@ from jfingerprint.printing import format_time
 
 def main():
     np.random.seed(42)
-    # Example: Generate random data
     N = 100000
-    d = 64
+    Q = 40
+    d = 3
+    k = 3
+    
     data = jf.data.generate_unit_vectors(N, d)
-
-    # Choose a query vector randomly
-    query = jf.data.generate_unit_vectors(1, d)[0]
-
-    # Define k
-    k = 5
+    queries = jf.data.generate_unit_vectors(Q, d)
 
     # Check if kd_tree_euclidean.pkl exists
     if os.path.exists(f'build/kdtree_euclidean_{d}.pkl'):
@@ -36,11 +34,14 @@ def main():
         print("KD-Tree built and saved successfully.")
     
     # Perform the search
-    nearest_indices_euclidean, euclidean_distances = kd_tree_euclidean.search(query, k)
+    nearest_indices_euclidean, euclidean_distances = kd_tree_euclidean.search(queries, k)
     
-    print("KD-Tree (Euclidean)\nNearest Indices:", nearest_indices_euclidean)
-    print("Distances:", np.round(euclidean_distances, 3))
-    print("Time Taken:", format_time(kd_tree_euclidean.last_result["time_seconds"]), "\n")
+    print("Naive Searcher (Euclidean)\nNearest Indices:", nearest_indices_euclidean[-1])
+    print("Distances:", np.round(euclidean_distances[-1], 3))
+    print("Time Taken:", format_time(kd_tree_euclidean.last_result["time_seconds"]), "Time Average:", format_time(kd_tree_euclidean.last_result["average_time_seconds"]))
+    print("Distance calculations:", kd_tree_euclidean.last_result["distance_calculations"], "Average distance calculations:", kd_tree_euclidean.last_result["average_distance_calculations"], "\n")
+    
 
 if __name__ == "__main__":
     main()
+    #print(sklearn.neighbors.VALID_METRICS['kd_tree'])

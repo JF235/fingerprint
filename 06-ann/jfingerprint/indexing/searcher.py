@@ -65,9 +65,9 @@ class Searcher(ABC):
     @abstractmethod
     def last_result(self) -> Optional[Dict[str, Any]]:
         """
-        Retrieves the last search result containing indices, distances, and search time.
+        Retrieves the last search result containing indices, distances, timing information, and distance calculations (total and average).
 
-        :return: Dictionary with keys 'indices', 'distances', and 'time_seconds'.
+        :return: Dictionary with keys "indices", "distances", "time_seconds", "average_time_seconds", and "distance_calculations", "average_distance_calculations".
                  Returns None if no search has been performed yet.
         :rtype: Optional[Dict[str, Any]]
         """

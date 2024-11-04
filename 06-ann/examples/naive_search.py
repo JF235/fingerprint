@@ -12,35 +12,33 @@ from jfingerprint.printing import format_time
 def main():
     np.random.seed(42)
     N = 100000
-    d = 64
+    Q = 40
+    d = 3
+    k = 3
+
     data = jf.data.generate_unit_vectors(N, d)
+    queries = jf.data.generate_unit_vectors(Q, d)
 
-    # Choose a query vector randomly
-    query = jf.data.generate_unit_vectors(1, d)[0]
-
-    # Define k
-    k = 5
-
-    # Instantiate the NaiveSearcher with data and Euclidean distance
     ns_euclidean = NaiveSearcher(jf.math.euclidean_distance, data=data)
     
-    # Perform the search
-    nearest_indices_euclidean, euclidean_distances = ns_euclidean.search(query, k)
-    
+    nearest_indices_euclidean, euclidean_distances = ns_euclidean.search(queries, k)
     
 
-    print("Naive Searcher (Euclidean)\nNearest Indices:", nearest_indices_euclidean)
-    print("Distances:", np.round(euclidean_distances, 3))
-    print("Time Taken:", format_time(ns_euclidean.last_result["time_seconds"]), "\n")
+    print("Naive Searcher (Euclidean)\nNearest Indices:", nearest_indices_euclidean[-1])
+    print("Distances:", np.round(euclidean_distances[-1], 3))
+    print("Time Taken:", format_time(ns_euclidean.last_result["time_seconds"]), "Time Average:", format_time(ns_euclidean.last_result["average_time_seconds"]))
+    print("Distance calculations:", ns_euclidean.last_result["distance_calculations"], "Average distance calculations:", ns_euclidean.last_result["average_distance_calculations"], "\n")
     
-    # Instantiate the NaiveSearcher with data and cosine distance (unit vectors) and repeat
+    #==========================================================================
+    
     ns_cosine = NaiveSearcher(jf.math.cosine_distanceU, data=data)
-    nearest_indices_cosine, cosine_distances = ns_cosine.search(query, k)
+    nearest_indices_cosine, cosine_distances = ns_cosine.search(queries, k)
     
     result = ns_cosine.last_result
-    print("\nNaive Searcher (Cosine)\nNearest Indices:", result["indices"])
-    print("Distances:", np.round(result["distances"], 3))
-    print("Time Taken:", format_time(result["time_seconds"]), "\n")
+    print("\nNaive Searcher (Cosine)\nNearest Indices:", result["indices"][-1])
+    print("Distances:", np.round(result["distances"][-1], 3))
+    print("Time Taken:", format_time(result["time_seconds"]), "Time Average:", format_time(result["average_time_seconds"]))
+    print("Distance calculations:", result["distance_calculations"], "Average distance calculations:", result["average_distance_calculations"], "\n")
     
     
 if __name__ == "__main__":
