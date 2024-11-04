@@ -9,12 +9,13 @@ import jfingerprint as jf
 from jfingerprint.indexing import NaiveSearcher
 from jfingerprint.printing import format_time
 
-def main():
+N = 100000
+Q = 40
+d = 3
+k = 3
+
+def main_naive(N, Q, d, k):
     np.random.seed(42)
-    N = 100000
-    Q = 40
-    d = 3
-    k = 3
 
     data = jf.data.generate_unit_vectors(N, d)
     queries = jf.data.generate_unit_vectors(Q, d)
@@ -42,4 +43,4 @@ def main():
     
     
 if __name__ == "__main__":
-    main()
+    main_naive(N, Q, d, k)

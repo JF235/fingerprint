@@ -1,10 +1,11 @@
 from .naive_searcher import NaiveSearcher
 from .kd_tree import KdTree
-# from .ball_tree_searcher import BallTreeSearcher  # Uncomment when implemented
+from .ball_tree import BallTreeSearcher
+#from .annoy import Annoy # Uncomment when Annoy is implemented
 
 __all__ = [
-    #"Searcher",
     "NaiveSearcher",
     "KdTree",
-    # "BallTreeSearcher",
+    "BallTreeSearcher",
+    #"Annoy"
 ]

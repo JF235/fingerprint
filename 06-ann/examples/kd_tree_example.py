@@ -10,12 +10,13 @@ import jfingerprint as jf
 from jfingerprint.indexing import KdTree
 from jfingerprint.printing import format_time
 
-def main():
+N = 100000
+Q = 40
+d = 3
+k = 3
+
+def main_kdtree(N, Q, d, k):
     np.random.seed(42)
-    N = 100000
-    Q = 40
-    d = 3
-    k = 3
     
     data = jf.data.generate_unit_vectors(N, d)
     queries = jf.data.generate_unit_vectors(Q, d)
@@ -29,7 +30,7 @@ def main():
     else:
         # Instantiate the KdTreeSearcher with Euclidean distance
         kd_tree_euclidean = KdTree(distance_metric='euclidean')
-        kd_tree_euclidean.build(data, leaf_size=30)
+        kd_tree_euclidean.build(data, leaf_size=30, log_time=True)
         kd_tree_euclidean.save(f'build/kdtree_euclidean_{d}.pkl')
         print("KD-Tree built and saved successfully.")
     
@@ -43,5 +44,5 @@ def main():
     
 
 if __name__ == "__main__":
-    main()
+    main_kdtree(N, Q, d, k)
     #print(sklearn.neighbors.VALID_METRICS['kd_tree'])
