@@ -3,6 +3,8 @@ real_docker.sh
 *.pkl
 *.dat
 *.npy
+*.ann
+*.voy
 *.o
 main
 settings.json

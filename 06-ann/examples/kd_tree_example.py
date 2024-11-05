@@ -37,6 +37,10 @@ def main_kdtree(N, Q, d, k):
     # Perform the search
     nearest_indices_euclidean, euclidean_distances = kd_tree_euclidean.search(queries, k)
     
+    if Q == 1:
+        nearest_indices_euclidean = [nearest_indices_euclidean]
+        euclidean_distances = [euclidean_distances]
+    
     print("Naive Searcher (Euclidean)\nNearest Indices:", nearest_indices_euclidean[-1])
     print("Distances:", np.round(euclidean_distances[-1], 3))
     print("Time Taken:", format_time(kd_tree_euclidean.last_result["time_seconds"]), "Time Average:", format_time(kd_tree_euclidean.last_result["average_time_seconds"]))

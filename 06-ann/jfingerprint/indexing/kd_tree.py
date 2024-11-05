@@ -123,9 +123,8 @@ class KdTree(Searcher):
         start_time = time.perf_counter()  # Start timing
 
         # Ensure query is two-dimensional
-        if queries.ndim == 1:
-            query = queries.reshape(1, -1)
-            distances, indices = self.kdtree.query(query, k=k, **kwargs)
+        if num_queries == 1:
+            distances, indices = self.kdtree.query(queries, k=k, **kwargs)
         elif num_queries > 1:
             distances, indices = self.kdtree.query(queries, k=k, **kwargs)
 

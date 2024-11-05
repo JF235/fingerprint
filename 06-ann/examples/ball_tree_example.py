@@ -34,6 +34,10 @@ def main_balltree(N, Q, d, k):
 
     # Perform the search
     nearest_indices_euclidean, euclidean_distances = ball_tree_euclidean.search(queries, k)
+    
+    if Q == 1:
+        nearest_indices_euclidean = [nearest_indices_euclidean]
+        euclidean_distances = [euclidean_distances]
 
     print("Ball-Tree Searcher (Euclidean)\nNearest Indices:", nearest_indices_euclidean[-1])
     print("Distances:", np.round(euclidean_distances[-1], 3))
