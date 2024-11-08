@@ -67,7 +67,7 @@ class NaiveSearcher(Searcher):
 
     def search(
         self, queries: np.ndarray, k: int, **kwargs: Any
-    ) -> Tuple[List[int], List[float]]:
+    ) -> Tuple[List[List[int]], List[List[float]]]:
         """
         Performs a brute-force k-nearest neighbors search.
 
@@ -82,7 +82,7 @@ class NaiveSearcher(Searcher):
         :param kwargs: Optional keyword arguments specific to the searcher.
         :type kwargs: Any
         :return: A tuple containing a list of indices and a list of corresponding distances.
-        :rtype: Tuple[List[int], List[float]]
+        :rtype: Tuple[List[List[int]], List[List[float]]]
         """
         if self.data.size == 0:
             raise ValueError("Data structure is empty.")

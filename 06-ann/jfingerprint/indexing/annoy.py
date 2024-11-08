@@ -22,7 +22,7 @@ class AnnoySearcher(Searcher):
     def __init__(
         self,
         f: int,
-        distance_metric: str = "angular",
+        distance_metric: str = "euclidean",
         data: Optional[np.ndarray] = None,
         **kwargs: Any
     ) -> None:
@@ -43,7 +43,6 @@ class AnnoySearcher(Searcher):
         self.f: int = f
         self.distance_metric: str = distance_metric
         self.annoy_index: Optional[AnnoyIndex] = AnnoyIndex(f, metric=distance_metric)
-        self.data: Optional[np.ndarray] = None
         self._last_result: Optional[Dict[str, Any]] = None  # Initialize last_result attribute
         self.index_built: bool = False
 
@@ -69,7 +68,6 @@ class AnnoySearcher(Searcher):
         if log_time:
             start_time = time.perf_counter()
 
-        self.data = data
         for i, vector in enumerate(data):
             self.annoy_index.add_item(i, vector.tolist())
         self.annoy_index.build(n_trees, n_jobs=kwargs.pop('n_jobs', -1))
@@ -96,14 +94,14 @@ class AnnoySearcher(Searcher):
         
         with open(filenamePick, 'rb') as file:
             loaded_data = pickle.load(file)
-            self.data = loaded_data['data']
             f_loaded = loaded_data['f']
             distance_metric_loaded = loaded_data['distance_metric']
-            self.annoy_index = AnnoyIndex(f_loaded, metric=distance_metric_loaded)
-            self.annoy_index.load(filenameAnnoy)
             self.f = f_loaded
             self.distance_metric = distance_metric_loaded
             self.index_built = True
+        
+        self.annoy_index = AnnoyIndex(self.f, metric=self.distance_metric)
+        self.annoy_index.load(filenameAnnoy)
 
     def save(self, filename: str) -> None:
         """
@@ -112,21 +110,16 @@ class AnnoySearcher(Searcher):
         :param filename: Path to the binary file where the index will be saved.
         :type filename: str
         """
-        if not self.index_built or self.data is None:
+        if not self.index_built:
             raise ValueError("Annoy index has not been built. Use the 'build' method to create the index before saving.")
-        
+
         filename = filename.split(".")[0]
         filenamePick = filename + ".pkl"
         filenameAnnoy = filename + ".ann"
         
-
         self.annoy_index.save(filenameAnnoy)
         with open(filenamePick, 'wb') as file:
-            pickle.dump({
-                'data': self.data,
-                'f': self.f,
-                'distance_metric': self.distance_metric
-            }, file)
+            pickle.dump({'f': self.f, 'distance_metric': self.distance_metric}, file)
 
     def search(
         self, queries: np.ndarray, k: int, **kwargs: Any
@@ -145,11 +138,11 @@ class AnnoySearcher(Searcher):
         :return: A tuple containing a list of lists of indices and a list of lists of corresponding distances.
         :rtype: Tuple[List[List[int]], List[List[float]]]
         """
-        if not self.index_built or self.data is None:
+        if not self.index_built:
             raise ValueError("Annoy index has not been built. Use the 'build' method to load data.")
 
         search_k = kwargs.get('search_k', -1)
-        include_distances = kwargs.get('include_distances', False)
+        include_distances = kwargs.get('include_distances', True)
 
         num_queries = queries.shape[0] if queries.ndim > 1 else 1
         #distance_calculations = num_queries * k  # Approximation
