@@ -38,9 +38,7 @@ class BallTreeSearcher(Searcher):
         :type kwargs: Any
         """
         self.distance_metric: str = distance_metric
-        self.ball_tree: Optional[BallTree] = None
-        self.data: Optional[np.ndarray] = None
-
+        self.index: Optional[BallTree] = None
         self._last_result: Optional[Dict[str, Any]] = None  # Initialize last_result attribute
 
         if data is not None:
@@ -61,8 +59,7 @@ class BallTreeSearcher(Searcher):
         if log_time:
             start_time = time.perf_counter()
 
-        self.data = data
-        self.ball_tree = BallTree(data, metric=self.distance_metric, **kwargs)
+        self.index = BallTree(data, metric=self.distance_metric, **kwargs)
 
         if log_time:
             end_time = time.perf_counter()
@@ -78,8 +75,7 @@ class BallTreeSearcher(Searcher):
         """
         with open(filename, 'rb') as file:
             loaded_data = pickle.load(file)
-            self.data = loaded_data['data']
-            self.ball_tree = loaded_data['ball_tree']
+            self.index = loaded_data['ball_tree']
             self.distance_metric = loaded_data['distance_metric']
 
     def save(self, filename: str) -> None:
@@ -89,13 +85,12 @@ class BallTreeSearcher(Searcher):
         :param filename: Path to the binary file where the structure will be saved.
         :type filename: str
         """
-        if self.ball_tree is None or self.data is None:
+        if self.index is None:
             raise ValueError("Ball-Tree has not been built.")
 
         with open(filename, 'wb') as file:
             pickle.dump({
-                'data': self.data,
-                'ball_tree': self.ball_tree,
+                'ball_tree': self.index,
                 'distance_metric': self.distance_metric
             }, file)
 
@@ -116,22 +111,22 @@ class BallTreeSearcher(Searcher):
         :return: A tuple containing a list of lists of indices and a list of lists of corresponding distances.
         :rtype: Tuple[List[List[int]], List[List[float]]]
         """
-        if self.ball_tree is None or self.data is None:
+        if self.index is None:
             raise ValueError("Ball-Tree has not been built. Use the 'build' method to load data.")
 
         num_queries = queries.shape[0] if queries.ndim > 1 else 1
-        distance_calculations = self.ball_tree.reset_n_calls()
+        distance_calculations = self.index.reset_n_calls()
 
         start_time = time.perf_counter()  # Start timing
 
         # Perform the search with the BallTree
-        distances, indices = self.ball_tree.query(queries, k=k, **kwargs)
+        distances, indices = self.index.query(queries, k=k, **kwargs)
 
         end_time = time.perf_counter()  # End timing
         elapsed_time = end_time - start_time  # Total time
         average_time = elapsed_time / num_queries if num_queries > 0 else elapsed_time  # Average time
 
-        distance_calculations = self.ball_tree.get_n_calls()
+        distance_calculations = self.index.get_n_calls()
         
         # Convert numpy arrays to lists
         if num_queries == 1:

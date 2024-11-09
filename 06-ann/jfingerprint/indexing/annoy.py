@@ -42,7 +42,7 @@ class AnnoySearcher(Searcher):
         """
         self.f: int = f
         self.distance_metric: str = distance_metric
-        self.annoy_index: Optional[AnnoyIndex] = AnnoyIndex(f, metric=distance_metric)
+        self.index: Optional[AnnoyIndex] = AnnoyIndex(f, metric=distance_metric)
         self._last_result: Optional[Dict[str, Any]] = None  # Initialize last_result attribute
         self.index_built: bool = False
 
@@ -69,8 +69,8 @@ class AnnoySearcher(Searcher):
             start_time = time.perf_counter()
 
         for i, vector in enumerate(data):
-            self.annoy_index.add_item(i, vector.tolist())
-        self.annoy_index.build(n_trees, n_jobs=kwargs.pop('n_jobs', -1))
+            self.index.add_item(i, vector.tolist())
+        self.index.build(n_trees, n_jobs=kwargs.pop('n_jobs', -1))
         self.index_built = True
 
         if log_time:
@@ -100,8 +100,8 @@ class AnnoySearcher(Searcher):
             self.distance_metric = distance_metric_loaded
             self.index_built = True
         
-        self.annoy_index = AnnoyIndex(self.f, metric=self.distance_metric)
-        self.annoy_index.load(filenameAnnoy)
+        self.index = AnnoyIndex(self.f, metric=self.distance_metric)
+        self.index.load(filenameAnnoy)
 
     def save(self, filename: str) -> None:
         """
@@ -117,7 +117,7 @@ class AnnoySearcher(Searcher):
         filenamePick = filename + ".pkl"
         filenameAnnoy = filename + ".ann"
         
-        self.annoy_index.save(filenameAnnoy)
+        self.index.save(filenameAnnoy)
         with open(filenamePick, 'wb') as file:
             pickle.dump({'f': self.f, 'distance_metric': self.distance_metric}, file)
 
@@ -156,7 +156,7 @@ class AnnoySearcher(Searcher):
             queries = queries.reshape(1, -1)
 
         for query in queries:
-            result = self.annoy_index.get_nns_by_vector(query.tolist(), k, search_k=search_k, include_distances=include_distances)
+            result = self.index.get_nns_by_vector(query.tolist(), k, search_k=search_k, include_distances=include_distances)
             if include_distances:
                 indices, distances = result
                 nearest_indices.append(indices)
