@@ -38,7 +38,7 @@ def process_block(block):
             avg_times.append(float(avg_time_match.group(1)))
     
     # Extrai o ID buscado
-    query_match = re.search(r'^(\d+)\s*:', block, re.MULTILINE)
+    query_match = re.search(r'^(\w+)\s*:', block, re.MULTILINE)
     if query_match:
         query_id = query_match.group(1)
     else:
