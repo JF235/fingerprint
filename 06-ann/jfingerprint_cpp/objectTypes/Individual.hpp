@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <cmath>
+#include <string>
+#include <iostream>
 #include "Feature.hpp"
 
 template <typename NumT>
@@ -11,7 +13,7 @@ public:
     /**
      * @brief Default constructor that initializes an empty Individual.
      */
-    Individual() : mean(), std() {}
+    Individual() : id(nextId++), mean(), std() {}
 
     /**
      * @brief Adds a feature to the Individual.
@@ -70,11 +72,7 @@ public:
 
     void print() const {
         std::cout << "Individual: " << name << "\n";
-        // std::cout << "Features: ";
-        // for (uint32_t featureId : features) {
-        //     std::cout << featureId << " ";
-        // }
-        // std::cout << "\n";
+        std::cout << "ID: " << id << "\n";
 
         // Calculate the mean of the means
         float meanOfMeans = 0;
@@ -97,7 +95,7 @@ public:
     }
 
     void printInline() const {
-        std::cout << name;
+        std::cout << name << " (ID: " << id << ") ";
 
         // Calculate the mean of the means
         float meanOfMeans = 0;
@@ -125,6 +123,7 @@ public:
         std::cout << std::fixed;
         // Print all elements
         std::cout << "Individual: " << name << "\n";
+        std::cout << "ID: " << id << "\n";
         std::cout << "Features: ";
         for (uint32_t featureId : features) {
             std::cout << featureId << " ";
@@ -144,10 +143,22 @@ public:
         std::cout << "\n\n";
     }
 
+    uint32_t getId() const {
+        return id;
+    }
+
     std::vector<uint32_t> features; ///< List of feature IDs associated with the Individual
     Feature<NumT> mean;             ///< Mean feature
     Feature<NumT> std;              ///< Standard deviation feature
     std::string name;               ///< Name of the Individual
+    uint32_t id;                    ///< Unique identifier of the Individual
+
+private:
+    static uint32_t nextId;         ///< Next unique identifier
 };
+
+// Initialize the static member
+template <typename NumT>
+uint32_t Individual<NumT>::nextId = 1;
 
 #endif // INDIVIDUAL_HPP

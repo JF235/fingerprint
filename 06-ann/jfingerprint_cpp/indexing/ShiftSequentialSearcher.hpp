@@ -1,5 +1,5 @@
-#ifndef SEQUENTIAL_SEARCHER_HPP
-#define SEQUENTIAL_SEARCHER_HPP
+#ifndef SHIFT_SEQUENTIAL_SEARCHER_HPP
+#define SHIFT_SEQUENTIAL_SEARCHER_HPP
 
 #include <vector>
 #include <functional> // For std::function
@@ -110,4 +110,4 @@ private:
     DistanceFunc &distanceFunc; ///< The distance function to evaluate distance between objects.
 };
 
-#endif // SEQUENTIAL_SEARCHER_HPP
+#endif // SHIFT_SEQUENTIAL_SEARCHER_HPP

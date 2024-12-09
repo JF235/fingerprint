@@ -111,7 +111,11 @@ public:
      * @return Output stream.
      */
     friend std::ostream& operator<<(std::ostream& os, const Feature& f) {
-        os << "id:" << f.id;
+        os << "(id:" << f.id;
+        if (f.representative != nullptr) {
+            os << ", rep:" << f.representative->name << "(" << f.representative->id << ")";
+        }
+        os << ") ";
         return os;
     }
 
@@ -190,6 +194,18 @@ public:
         return id == other.id;
     }
 
+    /**
+     * @brief Calculates the hash of the Feature.
+     * @return The hash of the Feature.
+     */
+    std::size_t hash() const {
+        std::size_t seed = 0;
+        for (const auto& val : values) {
+            seed ^= std::hash<NumT>{}(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        }
+        return seed;
+    }
+
     uint32_t id;                ///< Unique identifier
     std::vector<NumT> values;   ///< Vector of values
     Individual<NumT>* representative; ///< Pointer to the representative Individual
@@ -201,5 +217,15 @@ private:
 // Initialize the static member
 template <typename NumT>
 uint32_t Feature<NumT>::nextId = 0;
+
+namespace std {
+    template <typename NumT>
+    struct hash<Feature<NumT>> {
+        std::size_t operator()(const Feature<NumT>& f) const {
+            return f.hash();
+        }
+    };
+}
+
 
 #endif // FEATURE_HPP

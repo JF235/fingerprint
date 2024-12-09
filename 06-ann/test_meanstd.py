@@ -26,6 +26,44 @@ class Individual:
         self.mean = mean
         self.std = std
 
+class KNNResult:
+    def __init__(self, knn_list):
+        # Flat the list
+        self.knn_list = []
+        for knn_result in knn_list:
+            self.knn_list += knn_result
+    
+    def pick_best(self, k, method):
+        if method == "frequency":
+            return self.pick_best_frequency(k)
+        elif method == "distance":
+            return self.pick_best_distance(k)
+
+    def pick_best_frequency(self, k):
+        freq = {}
+        for id, ind_id, d in self.knn_list:
+            if ind_id not in freq:
+                freq[ind_id] = 0
+            freq[ind_id] += 1
+        
+        # Return the k most frequent individuals using tuple (id, freq)
+        freq = [(k, v) for k, v in freq.items()]
+        freq = sorted(freq, key=lambda x: x[1], reverse=True)
+        
+        best = [x for x in freq[:k]]
+        return best
+
+    def pick_best_distance(self, k):
+        sorted_knn = sorted(self.knn_list, key=lambda x: x[2])
+        # Return the k closest *different* individuals
+        best = []
+        for id, ind_id, d in sorted_knn:
+            if ind_id not in best:
+                best.append((ind_id, d))
+            if len(best) == k:
+                break
+        return best
+    
 # Gen data
 np.random.seed(42)
 individuals = []
@@ -62,29 +100,52 @@ for f in all_features:
     shifted_f = Feature(f.vec * f.individual.std + f.individual.mean)
     shifted_f.set_individual(f.individual)
     index.append(shifted_f)
-    
 
 print("Id\tFeature")
 for data_point in index:
     print(data_point.id, data_point.vec)
 
-# Perform query
-query = jf.data.generate_unit_vectors(1, dimensions)[0]
-query = query.astype(np.float32)
-print("Query\n", query)
-np.save(path + "\\teste1\\query.npy", query.reshape(1, dimensions))
+# Generate queries
+num_queries = 2
+queries = jf.data.generate_unit_vectors(num_queries, dimensions)
+queries = queries.astype(np.float32)
+print("Queries\n", queries)
+np.save(path + "\\teste1\\queries.npy", queries)
 
+# Define the index distance function, considering the mean and std of each individual
 def distance(query, data_point, log=False):
     query_shifted = query * data_point.individual.std + data_point.individual.mean
     print("Comparing", np.round(query_shifted, 3), np.round(data_point.vec, 3))
     return np.linalg.norm(query_shifted - data_point.vec)
 
-knn = []
-for data_point in index:
-    d = distance(query, data_point, log=True)
-    knn.append((data_point.id, d))
+# Perform the queries
+results = []
+for query in queries:
+    knn = []
+    for data_point in index:
+        d = distance(query, data_point, log=True)
+        knn.append((data_point.id, data_point.individual.id, d))
 
-knn.sort(key=lambda x: x[1])
-print("KNN")
-for id, d in knn:
-    print(id, d)
+    knn.sort(key=lambda x: x[2])
+    print("KNN")
+    for id, ind_id, d in knn:
+        print(id, ind_id, d, end="; ")
+    print()
+    
+    results.append(knn)
+
+print(results)
+# For each list in results, pick the first k elements
+k = 3
+new_results = []
+for knn_result in results:
+    new_results.append(knn_result[:k])
+
+# Pick the best individual
+best = KNNResult(new_results).pick_best(2, "frequency")
+print("Best by frequency")
+print(best)
+
+best = KNNResult(new_results).pick_best(2, "distance")
+print("Best by distance")
+print(best)
