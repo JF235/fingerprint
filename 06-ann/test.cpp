@@ -4,16 +4,17 @@
 #include "objectTypes/Feature.hpp"
 #include "data/loadFiles.hpp"
 #include "objectTypes/Individual.hpp"
+#include "indexing/ShiftSequentialSearcher.hpp"
+#include "indexing/DistanceFunction.hpp"
 
 typedef Feature<float> feature;
 typedef Individual<float> individual;
+typedef ShiftSequentialSearcher<feature, EuclideanDistance<feature>> ssseacher;
 
 int main(){
     // 1. Carregar dados
-    // std::vector<feature> galleryObjects = loadData("C:/Users/jfcmp/Documentos/Griaule/data/g1", true);
-    // std::vector<feature> queryObjects = loadData("C:/Users/jfcmp/Documentos/Griaule/data/g2", true);
 
-    auto [galleryIndividuals, features] = loadIndividuals("C:/Users/jfcmp/Documentos/Griaule/data/teste1", true);
+    auto [galleryIndividuals, features] = loadIndividuals("C:/Users/jfcmp/Documentos/Griaule/data/teste2", true);
 
     // for (auto &ind : galleryIndividuals)
     // {
@@ -39,11 +40,22 @@ int main(){
             f[i] = mean[i] + f[i] * std[i];
         }
     }
-    std::cout << std::endl;
 
-    // 1. Add the modified features to the Indexing structure
-    // 2. Create the modified structure for which every comparison will be made
+    // 2. Add the modified features to the Indexing structure
+    EuclideanDistance<feature> distanceFunc;
+    ssseacher searcher(distanceFunc);
+
+    searcher.addAll(features);
+
+    std::cout << searcher.size() << std::endl;
+
+
+    // 3. Create the modified structure for which every comparison will be made
     // with respect to the modified query: distance(meand + query * std, modifiedFeature)
+    std::vector<feature> queries = loadNpy("C:/Users/jfcmp/Documentos/Griaule/data/teste1/query.npy", true);
+
+    std::cout << searcher.knn(queries[0], 6);
+    
 
     return 0;
 }

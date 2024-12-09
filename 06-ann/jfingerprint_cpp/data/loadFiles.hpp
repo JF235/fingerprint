@@ -26,6 +26,7 @@ std::vector<feature> loadNpy(std::string filename, bool log_info)
 
     // Load the data objects from the .npy file
     npy::npy_data<float> d = npy::read_npy<float>(filename);
+
     data = std::move(d.data);   // Use std::move to avoid copying
     shape = std::move(d.shape); // Use std::move to avoid copying
 
@@ -91,6 +92,7 @@ std::pair<std::vector<std::shared_ptr<Individual<float>>>, std::vector<feature>>
     {
         if (entry.path().extension() == ".npy")
         {
+            // For each file, create an individual
             auto individual = std::make_shared<Individual<float>>();
             individual->name = entry.path().filename().string();
 
@@ -98,14 +100,16 @@ std::pair<std::vector<std::shared_ptr<Individual<float>>>, std::vector<feature>>
 
             for (auto &f : fileFeatures)
             {
+                // Add all the features for the individual
                 f.representative = individual.get();
                 individual->addFeature(f.getId());
                 allFeatures.push_back(f);
             }
 
+            // Calculate the mean and std for the individual
             individual->calculateMean(fileFeatures);
             individual->calculateStd(fileFeatures);
-
+    
             individuals.push_back(individual);
         }
     }
